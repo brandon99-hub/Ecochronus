@@ -1,0 +1,48 @@
+### Test API Endpoints
+### You can use this file with REST Client extension in VS Code, or copy these to Postman/Insomnia
+
+@baseUrl = http://localhost:3000
+@contentType = application/json
+
+### Health Check
+GET {{baseUrl}}/health
+
+### Signup
+POST {{baseUrl}}/api/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "email": "test@example.com",
+  "username": "testuser",
+  "password": "testpassword123"
+}
+
+### Login
+POST {{baseUrl}}/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "test@example.com",
+  "password": "testpassword123"
+}
+
+### Get Profile (requires auth token from login response)
+GET {{baseUrl}}/api/users/profile
+Authorization: Bearer YOUR_ACCESS_TOKEN_HERE
+
+### List Missions (requires auth token)
+GET {{baseUrl}}/api/missions
+Authorization: Bearer YOUR_ACCESS_TOKEN_HERE
+
+### Get Rewards (requires auth token)
+GET {{baseUrl}}/api/rewards
+Authorization: Bearer YOUR_ACCESS_TOKEN_HERE
+
+### Refresh Token
+POST {{baseUrl}}/api/auth/refresh
+Content-Type: {{contentType}}
+
+{
+  "refreshToken": "YOUR_REFRESH_TOKEN_HERE"
+}
+
