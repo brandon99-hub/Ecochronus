@@ -76,7 +76,7 @@ Create a `.env` file in the root directory with the following variables:
 
 ```env
 # Database
-DATABASE_URL="postgresql://postgres:Exlifes_6969@db.gxhaydtuwgmbtwnrhfwf.supabase.co:5432/postgres"
+DATABASE_URL="postgresql://postgres.gxhaydtuwgmbtwnrhfwf:Exlifes_6969@aws-1-eu-north-1.pooler.supabase.com:6543/postgres"
 
 # Server
 PORT=3000
