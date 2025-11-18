@@ -11,6 +11,10 @@ import usersRoutes from './modules/users/users.routes';
 import missionsRoutes from './modules/missions/missions.routes';
 import proofsRoutes from './modules/proofs/proofs.routes';
 import rewardsRoutes from './modules/rewards/rewards.routes';
+import godsRoutes from './modules/gods/gods.routes';
+import learningRoutes from './modules/learning/learning.routes';
+import mapRoutes from './modules/map/map.routes';
+import badgesRoutes from './modules/badges/badges.routes';
 
 const createApp = (): Express => {
   const app = express();
@@ -45,6 +49,10 @@ const createApp = (): Express => {
   app.use('/api/missions', missionsRoutes);
   app.use('/api/proofs', proofsRoutes);
   app.use('/api/rewards', rewardsRoutes);
+  app.use('/api/gods', godsRoutes);
+  app.use('/api/learning', learningRoutes);
+  app.use('/api/map', mapRoutes);
+  app.use('/api/badges', badgesRoutes);
 
   // Error handling
   app.use(notFoundHandler);

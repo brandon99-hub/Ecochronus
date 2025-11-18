@@ -53,7 +53,7 @@ export const getUploadUrl = async (req: AuthRequest, res: Response): Promise<Res
       userId: req.userId,
       missionProgressId,
       type,
-      storageUrl: `gs://${storageConfig.google.bucketName}/${storageKey}`, // Placeholder URL
+      storageUrl: `gs://${storageConfig.bucketName}/${storageKey}`,
       storageKey,
       status: 'PENDING',
     }).returning();

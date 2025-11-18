@@ -1,15 +1,27 @@
-# Mission Game Backend
+# EcoChronos: Wrath of Zeus - Backend API
 
-A pure backend-only REST API for a mobile game that enables users to complete in-game missions and earn rewards. Built with TypeScript and Express, featuring JWT authentication, mission tracking, proof verification, and reward management.
+A pure backend-only REST API for **EcoChronos**, an educational adventure game where players restore balance to Earth as the chosen Avatar of the gods. Built with TypeScript and Express, featuring JWT authentication, mission tracking, learning hub, god selection, corruption system, badges, and reward management.
 
 ## 🚀 Features
 
+### Core Features
 - ✅ **User Authentication** - Email/password and Google OAuth sign-in
-- ✅ **Mission System** - Create, track, and complete missions
+- ✅ **Mission System** - Create, track, and complete missions with corruption clearing
 - ✅ **Proof Verification** - Upload and verify mission proof (photos/videos)
 - ✅ **Anti-Cheat System** - Basic validation with extensible architecture
 - ✅ **Reward Management** - Automatic reward issuance with duplicate prevention
 - ✅ **Replay Attack Protection** - Nonce-based request validation
+
+### EcoChronos Game Features
+- ✅ **God Selection** - Choose your divine patron (Zeus, Athena, Artemis, Persephone)
+- ✅ **Learning Hub** - Educational lessons and quiz battles
+- ✅ **Map & Corruption System** - Track corruption levels across regions
+- ✅ **XP & Leveling** - Progressive leveling system with XP rewards
+- ✅ **Badge System** - Earn achievements and rewards
+- ✅ **Eco-Karma** - Track environmental impact and rewards
+- ✅ **Mission Filtering** - Filter by category, god, or region
+
+### Technical Features
 - ✅ **RESTful API** - Clean JSON-only endpoints
 - ✅ **Type Safety** - Full TypeScript support with Drizzle ORM
 
@@ -20,7 +32,7 @@ A pure backend-only REST API for a mobile game that enables users to complete in
 - **Database**: PostgreSQL with Drizzle ORM
 - **Authentication**: JWT (Access + Refresh tokens)
 - **OAuth**: Google Sign-In support
-- **Storage**: Google Cloud Storage or AWS S3
+- **Storage**: Google Cloud Storage
 - **Validation**: Zod schema validation
 - **Hosting**: Render or any cloud platform
 
@@ -36,10 +48,14 @@ A pure backend-only REST API for a mobile game that enables users to complete in
     - seed.ts      # Database seeding script
   /modules
     /auth          # Authentication (signup, login, Google OAuth, refresh, logout)
-    /users         # User management (profile, device tracking)
-    /missions      # Mission tracking (list, start, progress, complete)
+    /users         # User management (profile, device tracking, stats)
+    /missions      # Mission tracking (list, start, progress, complete with filtering)
     /proofs        # Proof upload (signed URLs) and verification with anti-cheat
     /rewards       # Reward issuance and tracking (duplicate prevention)
+    /gods          # God selection (list, select, get selected god)
+    /learning      # Learning hub (lessons, quizzes, progress tracking)
+    /map           # Map state and corruption system (regions, corruption clearing)
+    /badges        # Badge system (list, claim, auto-awarding)
   /utils           # Utilities (response formatting, JWT, storage, anti-cheat, password hashing)
   /middlewares     # Express middlewares (auth, error handling, replay protection)
   /app.ts          # Express app setup and route registration
@@ -75,19 +91,10 @@ JWT_REFRESH_EXPIRY=7d
 # Google OAuth (for Google Sign-In)
 GOOGLE_CLIENT_ID=your-google-oauth-client-id
 
-# Cloud Storage (Google Cloud)
+# Google Cloud Storage
 GOOGLE_CLOUD_PROJECT_ID=your-project-id
 GOOGLE_CLOUD_KEYFILE=path/to/keyfile.json
 GOOGLE_CLOUD_BUCKET_NAME=your-bucket-name
-
-# Cloud Storage (AWS S3 - alternative)
-AWS_ACCESS_KEY_ID=your-access-key
-AWS_SECRET_ACCESS_KEY=your-secret-key
-AWS_REGION=us-east-1
-AWS_S3_BUCKET_NAME=your-bucket-name
-
-# Storage Provider (google or aws)
-STORAGE_PROVIDER=google
 ```
 
 ### 3. Database Setup
@@ -100,9 +107,14 @@ npm run db:generate
 npm run db:seed
 ```
 
-The `db:generate` command will create all required tables (users, missions, mission_progress, proofs, rewards, vouchers, refresh_tokens) and enums (progress_status, proof_status) in your PostgreSQL database.
+The `db:generate` command will create all required tables including:
+- Core tables: `users`, `missions`, `mission_progress`, `proofs`, `rewards`, `vouchers`, `refresh_tokens`
+- EcoChronos tables: `lessons`, `quiz_questions`, `learning_progress`, `badges`, `user_badges`, `map_regions`
+- Enums: `progress_status`, `proof_status`
 
-To seed the database with sample missions for testing, run `npm run db:seed`.
+**Note**: The seed script checks for existing data before inserting, so it's safe to run multiple times without creating duplicates.
+
+To seed the database with EcoChronos missions, lessons, quizzes, and badges, run `npm run db:seed`.
 
 ### 4. Run Development Server
 
@@ -236,8 +248,40 @@ Get current user's profile.
     "username": "username",
     "deviceId": "device-id",
     "deviceInfo": { "os": "iOS", "version": "16.0" },
+    "selectedGod": "zeus",
+    "xp": 250,
+    "level": 2,
+    "totalEcoKarma": 50,
+    "corruptionCleared": 20,
     "createdAt": "2025-11-18T09:00:00Z",
     "updatedAt": "2025-11-18T09:00:00Z"
+  }
+}
+```
+
+#### `GET /api/users/stats`
+Get user statistics including XP, level, badges, and completion stats.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "stats": {
+      "level": 5,
+      "xp": 1250,
+      "xpProgress": {
+        "currentLevelXP": 1000,
+        "nextLevelXP": 1500,
+        "progressPercent": 50
+      },
+      "totalEcoKarma": 500,
+      "corruptionCleared": 100,
+      "selectedGod": "artemis",
+      "missionsCompleted": 10,
+      "lessonsCompleted": 4,
+      "badgesEarned": 3
+    }
   }
 }
 ```
@@ -274,6 +318,9 @@ List all active missions with user progress.
 **Query Parameters:**
 - `page` (optional): Page number (default: 1)
 - `limit` (optional): Items per page (default: 20)
+- `category` (optional): Filter by category (e.g., "forest", "river", "urban", "quiz")
+- `god` (optional): Filter by god (e.g., "zeus", "athena", "artemis", "persephone")
+- `region` (optional): Filter by region (e.g., "forest_restoration", "river_cleanup", "urban_pollution")
 
 **Response:**
 ```json
@@ -286,8 +333,14 @@ List all active missions with user progress.
         "title": "Complete First Mission",
         "description": "Complete your first mission",
         "type": "action",
+        "category": "forest",
+        "god": "artemis",
+        "region": "forest_restoration",
+        "corruptionLevel": 20,
+        "isCorruptionMission": true,
         "rewardAmount": 100,
         "requirements": { "minLevel": 1 },
+        "isUnlocked": true,
         "progress": {
           "id": "uuid",
           "status": "IN_PROGRESS",
@@ -453,6 +506,344 @@ Get proof verification status.
 }
 ```
 
+### ⚡ Gods (`/api/gods`)
+
+#### `GET /api/gods/list`
+List all available gods (public endpoint).
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "gods": [
+      {
+        "id": "zeus",
+        "name": "Zeus",
+        "description": "God of Sky and Thunder. Commands lightning and storms.",
+        "power": "Thunder Strike",
+        "color": "#FFD700"
+      },
+      {
+        "id": "athena",
+        "name": "Athena",
+        "description": "Goddess of Wisdom and Strategy. Master of tactical thinking.",
+        "power": "Wisdom Shield",
+        "color": "#4169E1"
+      },
+      {
+        "id": "artemis",
+        "name": "Artemis",
+        "description": "Goddess of Nature and Hunting. Protector of forests and wildlife.",
+        "power": "Nature's Blessing",
+        "color": "#228B22"
+      },
+      {
+        "id": "persephone",
+        "name": "Persephone",
+        "description": "Goddess of Spring and Renewal. Brings life back to corrupted lands.",
+        "power": "Spring Renewal",
+        "color": "#FF69B4"
+      }
+    ]
+  }
+}
+```
+
+#### `GET /api/gods/selected`
+Get currently selected god (requires authentication).
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "selectedGod": {
+      "id": "zeus",
+      "name": "Zeus",
+      "description": "God of Sky and Thunder. Commands lightning and storms.",
+      "power": "Thunder Strike",
+      "color": "#FFD700"
+    }
+  }
+}
+```
+
+#### `POST /api/gods/select`
+Select a god (requires authentication, can only be done once). Requires replay protection headers.
+
+**Request Body:**
+```json
+{
+  "god": "zeus"
+}
+```
+
+**Response:** Same as `/api/gods/selected`
+
+### 📚 Learning Hub (`/api/learning`)
+
+All endpoints require authentication.
+
+#### `GET /api/learning/lessons`
+List all available lessons with user progress.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "lessons": [
+      {
+        "id": "uuid",
+        "title": "Introduction to Environmental Protection",
+        "description": "Learn the basics of protecting our planet",
+        "god": "zeus",
+        "order": 1,
+        "unlocked": true,
+        "completed": false,
+        "quizScore": null,
+        "quizAttempts": 0
+      }
+    ]
+  }
+}
+```
+
+#### `GET /api/learning/lessons/:lessonId`
+Get lesson details with content.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "lesson": {
+      "id": "uuid",
+      "title": "Introduction to Environmental Protection",
+      "description": "Learn the basics",
+      "content": {
+        "slides": [
+          { "type": "text", "content": "Welcome to EcoChronos!" }
+        ]
+      },
+      "god": "zeus",
+      "order": 1,
+      "progress": {
+        "completed": false,
+        "quizScore": null,
+        "quizAttempts": 0
+      }
+    }
+  }
+}
+```
+
+#### `POST /api/learning/lessons/:lessonId/complete`
+Mark a lesson as completed (requires authentication).
+
+#### `GET /api/learning/quizzes/:quizId`
+Get quiz questions for a lesson (requires authentication).
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "quiz": {
+      "lessonId": "uuid",
+      "questions": [
+        {
+          "id": "uuid",
+          "question": "Who has summoned you to restore balance?",
+          "options": ["Poseidon", "Zeus", "Artemis", "Athena"],
+          "order": 1
+        }
+      ]
+    }
+  }
+}
+```
+
+#### `POST /api/learning/quizzes/:quizId/submit`
+Submit quiz answers (requires authentication). Requires replay protection headers.
+
+**Request Body:**
+```json
+{
+  "answers": [1, 1, 0, 2]
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "score": 75,
+    "passed": true,
+    "results": [
+      {
+        "questionId": "uuid",
+        "isCorrect": true,
+        "correctAnswer": 1,
+        "explanation": "Zeus is the king of gods"
+      }
+    ]
+  }
+}
+```
+
+#### `GET /api/learning/progress`
+Get learning hub progress statistics.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "progress": {
+      "completedLessons": 3,
+      "totalLessons": 4,
+      "completionPercent": 75,
+      "averageQuizScore": 85
+    }
+  }
+}
+```
+
+### 🗺️ Map & Corruption (`/api/map`)
+
+All endpoints require authentication.
+
+#### `GET /api/map/regions`
+Get all regions with corruption status.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "regions": [
+      {
+        "id": "forest_restoration",
+        "name": "Forest Restoration",
+        "description": "Ancient forests corrupted by waste",
+        "corruptionLevel": 80,
+        "isUnlocked": true,
+        "missionsCompleted": 2,
+        "totalMissions": 5,
+        "lastCleared": "2025-11-18T09:00:00Z"
+      }
+    ]
+  }
+}
+```
+
+#### `GET /api/map/state`
+Get full map state overview.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "mapState": {
+      "averageCorruption": 75,
+      "totalRegions": 3,
+      "regions": [...]
+    }
+  }
+}
+```
+
+#### `POST /api/map/regions/:region/clear-corruption`
+Clear corruption from a region (requires authentication). Requires replay protection headers.
+
+**Request Body:**
+```json
+{
+  "corruptionCleared": 25
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "region": "forest_restoration",
+    "corruptionLevel": 55,
+    "cleared": 25
+  }
+}
+```
+
+### 🏆 Badges (`/api/badges`)
+
+#### `GET /api/badges`
+List all available badges (requires authentication).
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "badges": [
+      {
+        "id": "uuid",
+        "code": "first_steps",
+        "name": "First Steps",
+        "description": "Complete your first mission",
+        "icon": "first_steps",
+        "requirementType": "mission_complete",
+        "requirementValue": 1,
+        "rewardAmount": 50
+      }
+    ]
+  }
+}
+```
+
+#### `GET /api/badges/user`
+Get user's earned badges (requires authentication).
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "badges": [
+      {
+        "id": "uuid",
+        "code": "first_steps",
+        "name": "First Steps",
+        "description": "Complete your first mission",
+        "earnedAt": "2025-11-18T09:00:00Z"
+      }
+    ]
+  }
+}
+```
+
+#### `POST /api/badges/:badgeId/claim`
+Claim a badge reward (requires authentication). Requires replay protection headers.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "badge": {
+      "id": "uuid",
+      "code": "first_steps",
+      "name": "First Steps",
+      "earnedAt": "2025-11-18T09:00:00Z"
+    }
+  }
+}
+```
+
 ### 🎁 Rewards (`/api/rewards`)
 
 All endpoints require authentication.
@@ -525,6 +916,12 @@ The database schema includes the following tables:
 - **`proofs`** - Uploaded proof files (photos/videos) with anti-cheat scores and verification status
 - **`rewards`** - Issued rewards with duplicate prevention
 - **`vouchers`** - Redeemable vouchers/codes
+- **`lessons`** - Educational lessons in the learning hub
+- **`quiz_questions`** - Quiz questions for lessons
+- **`learning_progress`** - User progress through lessons and quizzes
+- **`badges`** - Badge definitions with requirements
+- **`user_badges`** - User-earned badges with timestamps
+- **`map_regions`** - Map region state and corruption levels per user
 
 ### Enums
 - **`progress_status`**: `NOT_STARTED`, `IN_PROGRESS`, `PENDING_REVIEW`, `COMPLETED`, `FAILED`
@@ -540,13 +937,20 @@ A PowerShell test script is included for easy API testing:
 .\test-api.ps1
 ```
 
-This script automatically:
-1. Tests health check endpoint
-2. Attempts user signup (falls back to login if user exists)
-3. Retrieves user profile
-4. Lists missions
-5. Lists rewards
-6. Tests mission operations (if missions exist)
+This script automatically tests:
+1. Health check endpoint
+2. User signup (falls back to login if user exists)
+3. User profile retrieval
+4. User stats
+5. Mission listing and operations
+6. God selection endpoints
+7. Learning hub (lessons, progress)
+7. Map state and regions
+8. Badge listing and user badges
+9. Mission filtering by category
+10. Reward listing
+
+**Note**: Make sure to run `npm run db:seed` before testing to populate the database with EcoChronos data.
 
 ### Manual Testing
 
@@ -584,9 +988,9 @@ $headers = @{
 - **Database**: Uses Drizzle ORM for type-safe database operations
 - **Type Safety**: Full TypeScript support throughout the codebase
 - **Error Handling**: Standardized error responses with proper HTTP status codes
-- **Storage**: Supports both Google Cloud Storage and AWS S3 (configure via `STORAGE_PROVIDER`)
+- **Storage**: Google Cloud Storage with signed URLs for secure file uploads
 - **Replay Protection**: Uses in-memory nonce storage (consider Redis for production scaling)
-- **Anti-Cheat**: Basic checks implemented (file size, content type, file age); advanced ML-based checks can be added via placeholder
+- **Anti-Cheat**: Comprehensive validation checks for file size, content type, and file age
 - **Reward Duplication**: Prevents duplicate rewards per mission progress using database checks
 
 ## 🚀 Deployment
@@ -612,7 +1016,7 @@ Ensure all environment variables are set:
 - **Render**: Easy PostgreSQL + Node.js hosting
 - **Railway**: Simple deployment with database
 - **Fly.io**: Global edge deployment
-- **AWS/GCP**: Enterprise-grade hosting
+- **Google Cloud**: Enterprise-grade hosting with Google Cloud Storage
 
 ## 📚 Additional Resources
 

@@ -55,6 +55,24 @@ export const verifyUploadSchema = z.object({
   proofId: z.string().uuid('Invalid proof ID'),
 });
 
+export const selectGodSchema = z.object({
+  god: z.enum(['zeus', 'athena', 'artemis', 'persephone'], { errorMap: () => ({ message: 'God must be zeus, athena, artemis, or persephone' }) }),
+});
+
+export const completeLessonSchema = z.object({
+  lessonId: z.string().uuid('Invalid lesson ID'),
+});
+
+export const submitQuizSchema = z.object({
+  quizId: z.string().uuid('Invalid quiz ID'),
+  answers: z.array(z.number().int().min(0), { errorMap: () => ({ message: 'Answers must be an array of integers' }) }),
+});
+
+export const clearCorruptionSchema = z.object({
+  region: z.string().min(1, 'Region is required'),
+  corruptionCleared: z.number().int().min(0).max(100, 'Corruption cleared must be between 0 and 100'),
+});
+
 export const validateRequest = <T>(schema: z.ZodSchema<T>, data: unknown): { success: true; data: T } | { success: false; error: string } => {
   try {
     const validated = schema.parse(data);

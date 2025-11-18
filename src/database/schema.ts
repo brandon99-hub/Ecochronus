@@ -12,6 +12,11 @@ export const users = pgTable('users', {
   passwordHash: text('password_hash').notNull(),
   deviceId: varchar('device_id', { length: 255 }),
   deviceInfo: text('device_info'), // JSON string
+  selectedGod: varchar('selected_god', { length: 50 }), // zeus, athena, artemis, persephone
+  xp: integer('xp').default(0).notNull(),
+  level: integer('level').default(1).notNull(),
+  totalEcoKarma: integer('total_eco_karma').default(0).notNull(),
+  corruptionCleared: integer('corruption_cleared').default(0).notNull(), // Total corruption cleared
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -28,8 +33,16 @@ export const missions = pgTable('missions', {
   id: uuid('id').defaultRandom().primaryKey(),
   title: varchar('title', { length: 255 }).notNull(),
   description: text('description').notNull(),
-  type: varchar('type', { length: 50 }).notNull(), // e.g., "photo", "video", "location", "action"
+  type: varchar('type', { length: 50 }).notNull(), // e.g., "photo", "video", "location", "action", "quiz", "corruption"
+  category: varchar('category', { length: 50 }), // "forest", "river", "urban", "quiz", "corruption"
+  god: varchar('god', { length: 50 }), // Associated god: "zeus", "athena", "artemis", "persephone"
+  region: varchar('region', { length: 50 }), // "forest_restoration", "river_cleanup", "urban_pollution"
   rewardAmount: integer('reward_amount').notNull(),
+  corruptionLevel: integer('corruption_level').default(0).notNull(), // How much corruption this clears (0-100)
+  isCorruptionMission: boolean('is_corruption_mission').default(false).notNull(),
+  requiresCorruptionCleared: boolean('requires_corruption_cleared').default(false).notNull(),
+  unlocksAfterMissionId: uuid('unlocks_after_mission_id'), // Mission that unlocks this
+  lessonId: uuid('lesson_id'), // Associated lesson in learning hub
   isActive: boolean('is_active').default(true).notNull(),
   requirements: jsonb('requirements'), // JSON for mission-specific requirements
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -84,4 +97,82 @@ export const vouchers = pgTable('vouchers', {
   usedAt: timestamp('used_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
+
+// Learning Hub Tables
+export const lessons = pgTable('lessons', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  title: varchar('title', { length: 255 }).notNull(),
+  description: text('description').notNull(),
+  content: jsonb('content'), // Lesson slides/images/content
+  god: varchar('god', { length: 50 }), // Associated god
+  order: integer('order').notNull(),
+  unlocksMissionId: uuid('unlocks_mission_id'), // Mission unlocked after completion
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const quizQuestions = pgTable('quiz_questions', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  lessonId: uuid('lesson_id').notNull().references(() => lessons.id, { onDelete: 'cascade' }),
+  question: text('question').notNull(),
+  options: jsonb('options').notNull(), // Array of answer options
+  correctAnswer: integer('correct_answer').notNull(), // Index of correct answer
+  explanation: text('explanation'),
+  order: integer('order').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const learningProgress = pgTable('learning_progress', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  lessonId: uuid('lesson_id').notNull().references(() => lessons.id, { onDelete: 'cascade' }),
+  completed: boolean('completed').default(false).notNull(),
+  quizScore: integer('quiz_score'), // 0-100
+  quizAttempts: integer('quiz_attempts').default(0).notNull(),
+  completedAt: timestamp('completed_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  uniqueUserLesson: unique().on(table.userId, table.lessonId),
+}));
+
+// Badges System Tables
+export const badges = pgTable('badges', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  code: varchar('code', { length: 100 }).notNull().unique(),
+  name: varchar('name', { length: 255 }).notNull(),
+  description: text('description').notNull(),
+  icon: varchar('icon', { length: 100 }), // Icon identifier
+  requirementType: varchar('requirement_type', { length: 50 }).notNull(), // "mission_complete", "xp_reached", "corruption_cleared", etc.
+  requirementValue: integer('requirement_value').notNull(),
+  rewardAmount: integer('reward_amount').default(0).notNull(),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const userBadges = pgTable('user_badges', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  badgeId: uuid('badge_id').notNull().references(() => badges.id, { onDelete: 'cascade' }),
+  earnedAt: timestamp('earned_at').defaultNow().notNull(),
+}, (table) => ({
+  uniqueUserBadge: unique().on(table.userId, table.badgeId),
+}));
+
+// Map State Table
+export const mapRegions = pgTable('map_regions', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  region: varchar('region', { length: 50 }).notNull(), // "forest_restoration", "river_cleanup", "urban_pollution"
+  corruptionLevel: integer('corruption_level').default(100).notNull(), // 0-100
+  isUnlocked: boolean('is_unlocked').default(false).notNull(),
+  missionsCompleted: integer('missions_completed').default(0).notNull(),
+  totalMissions: integer('total_missions').default(0).notNull(),
+  lastCleared: timestamp('last_cleared'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  uniqueUserRegion: unique().on(table.userId, table.region),
+}));
 

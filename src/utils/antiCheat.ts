@@ -68,14 +68,8 @@ export const runAntiCheatChecks = async (input: AntiCheatInput): Promise<AntiChe
     checks.push(ageCheck);
   }
 
-  // Placeholder for advanced checks (ML-based image analysis, etc.)
-  const advancedCheck: AntiCheatCheck = {
-    name: 'advanced_analysis',
-    passed: true, // Placeholder - always pass for MVP
-    score: 0.8, // Default score for MVP (can be enhanced with actual ML analysis)
-    message: 'Advanced analysis not implemented (MVP placeholder)',
-  };
-  checks.push(advancedCheck);
+  // Additional validation checks
+  // Advanced ML-based image analysis can be added here in the future
 
   // Calculate overall score (average of all checks)
   const overallScore = checks.reduce((sum, check) => sum + check.score, 0) / checks.length;
