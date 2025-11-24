@@ -4,14 +4,34 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
-import { Sparkles, Mail, Lock, Loader2, User } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Sparkles, Mail, Lock, Loader2, User, Compass, Shield, ScrollText } from "lucide-react";
 import loginBg from "@assets/generated_images/login_background_nebula.png";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, registerSchema } from "@/lib/validation";
 import { z } from "zod";
+
+const heroPoints = [
+  {
+    title: "Choose Your Patron",
+    description: "Align with Zeus, Athena, Artemis, or Persephone to unlock unique blessings.",
+    icon: Shield,
+  },
+  {
+    title: "Cleanse Corruption",
+    description: "Undertake quests that lower regional corruption and earn eco karma.",
+    icon: Compass,
+  },
+  {
+    title: "Unlock Lore",
+    description: "Each chapter reveals secrets of EcoChronos and rewards rare items.",
+    icon: ScrollText,
+  },
+];
 
 export default function AuthPage() {
   const [, setLocation] = useLocation();
@@ -74,22 +94,48 @@ export default function AuthPage() {
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: `url(${loginBg})` }}
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/70 to-black/80" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/80 to-black/90" />
+      <ParticleField />
 
-      <div className="relative z-10 w-full max-w-md animate-bounce-in">
-        <div className="text-center mb-8 space-y-2">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <Sparkles className="h-12 w-12 text-primary animate-glow-pulse" />
+      <div className="relative z-10 max-w-6xl w-full grid gap-8 lg:grid-cols-[1.1fr_0.9fr] items-center">
+        <div className="space-y-6 text-white animate-fade-up">
+          <div className="inline-flex items-center gap-3 rounded-full border border-white/20 bg-white/5 px-5 py-2 text-xs uppercase tracking-[0.4em]">
+            <Sparkles className="h-4 w-4 text-primary" />
+            EcoChronos Codex
           </div>
-          <h1 className="font-serif text-5xl font-bold gradient-text mb-2">
-            EcoChronos
-          </h1>
-          <p className="text-lg text-gray-300 font-medium">
-            The gods have chosen you to restore balance
-          </p>
+          <div className="space-y-4">
+            <h1 className="font-serif text-5xl lg:text-6xl font-bold leading-tight text-white">
+              Awaken, Avatar.
+              <br />
+              The timeline needs you.
+            </h1>
+            <p className="text-base text-white/80 max-w-xl">
+              Sign in to continue your crusade or forge a new avatar to cleanse corrupted regions,
+              earn eco karma, and restore divine balance.
+            </p>
+          </div>
+
+          <Separator className="bg-white/20" />
+
+          <div className="grid gap-4">
+            {heroPoints.map((point) => (
+              <div
+                key={point.title}
+                className="flex items-start gap-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
+              >
+                <point.icon className="h-5 w-5 text-primary" />
+                <div>
+                  <p className="font-semibold text-white">{point.title}</p>
+                  <p className="text-sm text-white/70">{point.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <Card className="backdrop-blur-xl bg-card/95 border-2 border-primary/30 shadow-2xl glow-primary">
+        <div className="relative animate-fade-up delay-100">
+          <div className="absolute -inset-1 rounded-[36px] bg-gradient-to-br from-primary/40 via-transparent to-primary/10 blur-2xl opacity-70" />
+          <Card className="relative backdrop-blur-2xl bg-background/95 border-2 border-primary/30 shadow-2xl rounded-[32px]">
           <CardHeader className="space-y-1 pb-6">
             <CardTitle className="text-2xl font-serif text-center">
               Begin Your Journey
@@ -262,10 +308,34 @@ export default function AuthPage() {
           </CardContent>
         </Card>
 
-        <p className="text-center text-sm text-gray-400 mt-6">
-          Join the chosen ones in their quest to save Earth
-        </p>
+          <p className="text-center text-sm text-gray-300 mt-6">
+            Join the chosen ones in their quest to save Earth.
+          </p>
+        </div>
       </div>
+    </div>
+  );
+}
+
+function ParticleField() {
+  const particles = Array.from({ length: 25 });
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      {particles.map((_, index) => (
+        <span
+          key={index}
+          className={cn(
+            "absolute h-1 w-1 rounded-full bg-primary/40 animate-pulse",
+            "blur-[1px]"
+          )}
+          style={{
+            top: `${Math.random() * 100}%`,
+            left: `${Math.random() * 100}%`,
+            animationDelay: `${Math.random() * 3}s`,
+            animationDuration: `${2 + Math.random() * 4}s`,
+          }}
+        />
+      ))}
     </div>
   );
 }

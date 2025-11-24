@@ -194,7 +194,7 @@ export default function MissionPage() {
     <div className="min-h-screen bg-background">
       <Navbar stats={stats} />
 
-      <main className="container mx-auto px-6 py-8 space-y-8">
+      <main className="mx-auto w-full max-w-[1200px] px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         <div className="flex items-center justify-between">
           <Button
             variant="ghost"
@@ -304,7 +304,6 @@ export default function MissionPage() {
               </CardFooter>
             </Card>
 
-            <MissionInteraction mission={mission} />
           </div>
 
           <Card className="border border-accent/30 bg-card/80">
@@ -337,6 +336,8 @@ export default function MissionPage() {
             </CardContent>
           </Card>
         </section>
+
+        <MissionInteraction mission={mission} />
       </main>
       {completionSummary && (
         <MissionCompletionModal

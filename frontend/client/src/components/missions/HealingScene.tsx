@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Droplets, Leaf, Recycle, Sparkles } from "lucide-react";
+import { Droplets, Leaf, Recycle, Sparkles, Sun, Music2, Droplet } from "lucide-react";
 import { Mission, api } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
@@ -169,6 +170,8 @@ function useMissionCompletion(missionId: string, alreadyCompleted: boolean) {
   return { complete, isPending: mutation.isPending };
 }
 
+type RitualAction = "water" | "sunlight" | "song";
+
 function TreeRegrowthScene({
   status,
   initialProgress,
@@ -179,6 +182,7 @@ function TreeRegrowthScene({
 }: SceneProps) {
   const [localProgress, setLocalProgress] = useState(initialProgress);
   const [celebrate, setCelebrate] = useState(initialProgress >= 100);
+  const [actionFeed, setActionFeed] = useState<string[]>([]);
 
   useEffect(() => {
     setLocalProgress(initialProgress);
@@ -202,50 +206,98 @@ function TreeRegrowthScene({
     return "dormant";
   }, [localProgress]);
 
-  const handleTap = () => {
+  const handleAction = (action: RitualAction) => {
     if (status !== "ACTIVE" || localProgress >= 100 || isBusy) return;
-    const next = Math.min(100, localProgress + step);
+    const bonus =
+      action === "water" ? 12 : action === "sunlight" ? 10 : 9;
+    const next = Math.min(100, localProgress + step + bonus);
     setLocalProgress(next);
     onProgressCommit(next);
     if (localProgress < 100 && next >= 100) {
       setCelebrate(true);
       onComplete();
     }
+    setActionFeed((feed) => {
+      const entry =
+        action === "water"
+          ? "You nourished the roots with crystalline water."
+          : action === "sunlight"
+          ? "Sunbeams flood the canopy and awaken dormant buds."
+          : "Forest hymns echo through the grove, summoning wildlife.";
+      return [entry, ...feed].slice(0, 4);
+    });
   };
 
   return (
-    <Card className="border border-emerald-400/30 bg-card/80">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2 font-serif text-2xl">
-          <Leaf className="h-5 w-5 text-emerald-400" />
-          Tree Regrowth Ritual
-        </CardTitle>
-        <span className="text-sm uppercase tracking-wide text-muted-foreground">
-          {status === "ACTIVE" ? "Tap to revive" : "Mission complete"}
-        </span>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <p className="text-sm text-muted-foreground">
-          Channel energy into the heartwood. Each tap restores life and brightens the grove.
-        </p>
-        <motion.button
-          onClick={handleTap}
+    <section className="rounded-3xl border border-emerald-400/30 bg-card/90 p-6 space-y-5">
+      <header className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="space-y-1">
+          <p className="text-xs uppercase tracking-[0.4em] text-emerald-500">Sacred Ritual</p>
+          <h3 className="font-serif text-3xl flex items-center gap-2">
+            <Leaf className="h-5 w-5 text-emerald-400" />
+            Tree Regrowth
+          </h3>
+          <div className="text-sm text-muted-foreground flex flex-wrap gap-2">
+            <span>Vitality: {localProgress}%</span>
+            <span>Rituals remaining: {Math.max(0, Math.ceil((100 - localProgress) / (step + 8)))}</span>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <BadgeDisplay label="Status" value={status === "ACTIVE" ? "In progress" : "Complete"} />
+          <BadgeDisplay label="Phase" value={phase} />
+        </div>
+      </header>
+
+      <div className="flex flex-wrap gap-3">
+        <RitualButton
+          icon={Droplet}
+          label="Water Roots"
+          onClick={() => handleAction("water")}
           disabled={status !== "ACTIVE" || localProgress >= 100 || isBusy}
-          className="relative block h-72 w-full overflow-hidden rounded-2xl border border-emerald-500/30 shadow-lg"
-          whileTap={{ scale: status === "ACTIVE" ? 0.97 : 1 }}
-        >
-          <TreeVisual phase={phase} progress={localProgress} celebrate={celebrate} />
-        </motion.button>
-        <Progress value={localProgress} className="h-2" />
-        {localProgress >= 100 ? (
-          <p className="text-sm font-semibold text-emerald-500">The grove thrives once more!</p>
-        ) : (
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">
-            {Math.ceil((100 - localProgress) / step)} taps remaining
-          </p>
-        )}
-      </CardContent>
-    </Card>
+        />
+        <RitualButton
+          icon={Sun}
+          label="Call Sunlight"
+          onClick={() => handleAction("sunlight")}
+          disabled={status !== "ACTIVE" || localProgress >= 100 || isBusy}
+        />
+        <RitualButton
+          icon={Music2}
+          label="Sing Hymn"
+          onClick={() => handleAction("song")}
+          disabled={status !== "ACTIVE" || localProgress >= 100 || isBusy}
+        />
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[1.6fr_0.8fr]">
+        <div className="space-y-4">
+          <motion.div
+            className="relative block h-[22rem] w-full overflow-hidden rounded-3xl border border-emerald-500/30 shadow-2xl"
+            whileTap={{ scale: status === "ACTIVE" ? 0.97 : 1 }}
+          >
+            <TreeVisual phase={phase} progress={localProgress} celebrate={celebrate} />
+          </motion.div>
+          <Progress value={localProgress} className="h-2" />
+          {localProgress >= 100 ? (
+            <p className="text-sm font-semibold text-emerald-500">
+              The grove thrives once more. Return to the region overview for your reward.
+            </p>
+          ) : (
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">
+              Channel more rituals to reach full renewal.
+            </p>
+          )}
+        </div>
+        <FeedPanel
+          title="Ritual Chronicle"
+          entries={
+            actionFeed.length
+              ? actionFeed
+              : ["Awaiting your first ritual. Channel energy to awaken the grove."]
+          }
+        />
+      </div>
+    </section>
   );
 }
 
@@ -263,6 +315,9 @@ function WaterPurificationScene({
     initialProgress >= 100 ? [] : createDebris(totalDebris)
   );
   const [celebrate, setCelebrate] = useState(initialProgress >= 100);
+  const [feedEntries, setFeedEntries] = useState<string[]>([]);
+  const [comboCount, setComboCount] = useState(0);
+  const lastClickRef = useRef<number>(0);
 
   useEffect(() => {
     setLocalProgress(initialProgress);
@@ -274,6 +329,7 @@ function WaterPurificationScene({
   const handleDebrisClick = (id: number) => {
     if (status !== "ACTIVE" || isBusy) return;
     setDebris((current) => {
+      const target = current.find((trash) => trash.id === id);
       const updated = current.filter((trash) => trash.id !== id);
       const cleared = totalDebris - updated.length;
       const next = Math.min(100, Math.round((cleared / totalDebris) * 100));
@@ -282,6 +338,29 @@ function WaterPurificationScene({
       if (next >= 100) {
         setCelebrate(true);
         onComplete();
+      }
+      const now = Date.now();
+      if (now - lastClickRef.current < 1200) {
+        setComboCount((prev) => prev + 1);
+        setFeedEntries((entries) => [
+          `Combo x${comboCount + 1}! Rapid cleansing boosts clarity.`,
+          ...entries,
+        ].slice(0, 5));
+      } else {
+        setComboCount(1);
+      }
+      lastClickRef.current = now;
+      if (target) {
+        const descriptor =
+          target.variant === "bag"
+            ? "Plastic heap removed"
+            : target.variant === "bottle"
+            ? "Toxic bottle captured"
+            : "Industrial canister secured";
+        setFeedEntries((entries) => [
+          `${descriptor}. River clarity rises to ${next}%.`,
+          ...entries,
+        ].slice(0, 5));
       }
       return updated;
     });
@@ -301,37 +380,60 @@ function WaterPurificationScene({
   }, [localProgress]);
 
   return (
-    <Card className="border border-sky-400/30 bg-card/80">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2 font-serif text-2xl">
-          <Droplets className="h-5 w-5 text-sky-400" />
-          Water Purification
-        </CardTitle>
-        <span className="text-sm uppercase tracking-wide text-muted-foreground">
-          {status === "ACTIVE" ? "Clear the debris" : "Mission complete"}
-        </span>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <p className="text-sm text-muted-foreground">
-          Remove the debris pieces. Each cleared item restores clarity to the river.
-        </p>
-        <WaterVisual
-          progress={localProgress}
-          celebrate={celebrate}
-          debris={debris}
-          onDebrisClick={handleDebrisClick}
-          disabled={status !== "ACTIVE" || isBusy}
+    <section className="rounded-3xl border border-sky-400/40 bg-card/95 p-6 space-y-5">
+      <header className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="space-y-1">
+          <p className="text-xs uppercase tracking-[0.4em] text-sky-500">Mission Control</p>
+          <h3 className="font-serif text-3xl flex items-center gap-2">
+            <Droplets className="h-5 w-5 text-sky-400" />
+            Water Purification
+          </h3>
+          <div className="text-sm text-muted-foreground flex flex-wrap gap-4">
+            <span>Clarity: {localProgress}%</span>
+            <span>Debris remaining: {debris.length}</span>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <BadgeDisplay label="Combo" value={`x${Math.max(comboCount, 1)}`} />
+          <BadgeDisplay label="Status" value={status === "ACTIVE" ? "In progress" : "Complete"} />
+        </div>
+      </header>
+      <section className="grid gap-6 lg:grid-cols-[1.5fr_0.5fr]">
+        <div className="space-y-4">
+          <WaterVisual
+            progress={localProgress}
+            celebrate={celebrate}
+            debris={debris}
+            onDebrisClick={handleDebrisClick}
+            disabled={status !== "ACTIVE" || isBusy}
+            tooltips
+          />
+          <div className="flex flex-wrap gap-4 items-center">
+            <RadialGauge value={localProgress} label="River Vitality" deity="Persephone" />
+            <div className="flex-1 space-y-2">
+              <Progress value={localProgress} className="h-2" />
+              {localProgress >= 100 ? (
+                <p className="text-sm font-semibold text-sky-400">
+                  Waters run clear! Report back for rewards.
+                </p>
+              ) : (
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Chain quick cleanses for bonus clarity.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+        <FeedPanel
+          title="River Log"
+          entries={
+            feedEntries.length
+              ? feedEntries
+              : ["No debris removed yet. Target the largest spill to begin purification."]
+          }
         />
-        <Progress value={localProgress} className="h-2" />
-        {localProgress >= 100 ? (
-          <p className="text-sm font-semibold text-sky-400">Waters run clear! Report back for rewards.</p>
-        ) : (
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">
-            {debris.length} debris pieces remaining
-          </p>
-        )}
-      </CardContent>
-    </Card>
+      </section>
+    </section>
   );
 }
 
@@ -357,14 +459,47 @@ function createDebris(count: number): DebrisPiece[] {
 interface WasteTile {
   id: number;
   cleared: boolean;
+  type: "plastic" | "industrial" | "organic" | "oil";
+  description: string;
+  beforeImage?: string;
+  afterImage?: string;
 }
 
 function createWasteTiles(count: number, filledRatio: number): WasteTile[] {
   const filled = Math.round(count * filledRatio);
-  return Array.from({ length: count }).map((_, index) => ({
-    id: index + 1,
-    cleared: index < filled,
-  }));
+  const tileTypes: Array<WasteTile["type"]> = ["plastic", "industrial", "organic", "oil"];
+  return Array.from({ length: count }).map((_, index) => {
+    const type = tileTypes[index % tileTypes.length];
+    const before = type === "industrial"
+      ? "/assets/tiles/industrial-before.png"
+      : type === "oil"
+      ? "/assets/tiles/oil-before.png"
+      : type === "organic"
+      ? "/assets/tiles/organic-before.png"
+      : "/assets/tiles/plastic-before.png";
+    const after = type === "industrial"
+      ? "/assets/tiles/industrial-after.png"
+      : type === "oil"
+      ? "/assets/tiles/oil-after.png"
+      : type === "organic"
+      ? "/assets/tiles/organic-after.png"
+      : "/assets/tiles/plastic-after.png";
+    return {
+      id: index + 1,
+      cleared: index < filled,
+      type,
+      description:
+        type === "plastic"
+          ? "Plastic heaps smothering seedlings."
+          : type === "industrial"
+          ? "Abandoned machinery leaking toxins."
+          : type === "organic"
+          ? "Rotting organic waste attracting pests."
+          : "Oil spill trench suffocating the soil.",
+      beforeImage: before,
+      afterImage: after,
+    };
+  });
 }
 
 function PollutionCleanupScene({
@@ -381,6 +516,7 @@ function PollutionCleanupScene({
     createWasteTiles(totalItems, initialProgress / 100)
   );
   const [celebrate, setCelebrate] = useState(initialProgress >= 100);
+  const [feedEntries, setFeedEntries] = useState<string[]>([]);
 
   useEffect(() => {
     setLocalProgress(initialProgress);
@@ -410,6 +546,10 @@ function PollutionCleanupScene({
         setCelebrate(true);
         onComplete();
       }
+      setFeedEntries((entries) => [
+        `Sector ${id} restored. Soil vitality climbs to ${nextProgress}%.`,
+        ...entries,
+      ].slice(0, 5));
       return updated;
     });
   };
@@ -417,38 +557,91 @@ function PollutionCleanupScene({
   const remaining = wasteTiles.filter((tile) => !tile.cleared).length;
 
   return (
-    <Card className="border border-amber-400/30 bg-card/80">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2 font-serif text-2xl">
-          <Recycle className="h-5 w-5 text-amber-400" />
-          Pollution Cleanup
-        </CardTitle>
-        <span className="text-sm uppercase tracking-wide text-muted-foreground">
-          {status === "ACTIVE" ? "Collect the waste" : "Mission complete"}
-        </span>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <p className="text-sm text-muted-foreground">
-          Tap polluted plots to clear debris and restore fertile soil.
-        </p>
-        <PollutionVisual
-          tiles={wasteTiles}
-          disabled={status !== "ACTIVE" || isBusy}
-          onCleanTile={handleTileClean}
-          celebrate={celebrate}
-        />
-        <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-r from-stone-900 via-stone-800 to-emerald-900 p-6 text-white">
-          <p className="text-sm uppercase tracking-wide">Area Vitality</p>
-          <p className="text-3xl font-bold">{localProgress}%</p>
+    <section className="rounded-3xl border border-amber-400/40 bg-card/95 p-6 space-y-5">
+      <header className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="space-y-1">
+          <p className="text-xs uppercase tracking-[0.4em] text-amber-500">Urban Mission</p>
+          <h3 className="font-serif text-3xl flex items-center gap-2">
+            <Recycle className="h-5 w-5 text-amber-400" />
+            Pollution Cleanup
+          </h3>
+          <div className="text-sm text-muted-foreground flex flex-wrap gap-4">
+            <span>Area vitality: {localProgress}%</span>
+            <span>Waste patches remaining: {remaining}</span>
+          </div>
         </div>
-        <Progress value={localProgress} className="h-2" />
-        <p className="text-xs uppercase tracking-wide text-muted-foreground">
-          {remaining} waste patches remaining
-        </p>
-      </CardContent>
-    </Card>
+        <div className="flex gap-2">
+          <BadgeDisplay label="Status" value={status === "ACTIVE" ? "In progress" : "Complete"} />
+          <BadgeDisplay label="Sectors" value={`${totalItems}`} />
+        </div>
+      </header>
+
+      <section className="grid gap-6 lg:grid-cols-[1.4fr_0.6fr]">
+        <div className="space-y-4">
+          <PollutionVisual
+            tiles={wasteTiles}
+            disabled={status !== "ACTIVE" || isBusy}
+            onCleanTile={handleTileClean}
+            celebrate={celebrate}
+          />
+          <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-r from-stone-900 via-stone-800 to-emerald-900 p-6 text-white">
+            <p className="text-sm uppercase tracking-wide">Area Vitality</p>
+            <p className="text-3xl font-bold">{localProgress}%</p>
+          </div>
+          <Progress value={localProgress} className="h-2" />
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">
+            Chain cleans on adjacent plots to reveal hidden gardens.
+          </p>
+        </div>
+        <FeedPanel
+          title="Cleanup Dispatch"
+          entries={
+            feedEntries.length
+              ? feedEntries
+              : ["Survey teams ready. Clear any tile to reveal the soil beneath."]
+          }
+        />
+      </section>
+    </section>
   );
 }
+
+type IconRenderer = (props: { className?: string }) => JSX.Element;
+
+interface RitualButtonProps {
+  icon: IconRenderer;
+  label: string;
+  onClick: () => void;
+  disabled: boolean;
+}
+
+const RitualButton = ({ icon: Icon, label, onClick, disabled }: RitualButtonProps) => (
+  <Button
+    variant="secondary"
+    className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 text-xs uppercase tracking-wide"
+    onClick={onClick}
+    disabled={disabled}
+  >
+    <Icon className="h-4 w-4 text-primary" />
+    {label}
+  </Button>
+);
+
+const FeedPanel = ({ title, entries }: { title: string; entries: string[] }) => (
+  <div className="rounded-2xl border border-border/60 bg-background/70 p-4 space-y-3">
+    <p className="text-xs uppercase tracking-wide text-muted-foreground">{title}</p>
+    <ul className="space-y-2 text-sm text-muted-foreground max-h-64 overflow-auto pr-1">
+      {entries.map((entry, index) => (
+        <li
+          key={`${entry}-${index}`}
+          className="rounded-xl border border-border/40 bg-muted/30 px-3 py-2 leading-relaxed"
+        >
+          {entry}
+        </li>
+      ))}
+    </ul>
+  </div>
+);
 
 const CompletionBanner = () => (
   <Card className="border border-primary/30 bg-gradient-to-r from-primary/15 via-background to-background">
@@ -457,6 +650,51 @@ const CompletionBanner = () => (
       <span>The ritual is complete. Corruption in this region has subsided.</span>
     </CardContent>
   </Card>
+);
+
+const BadgeDisplay = ({ label, value }: { label: string; value: string }) => (
+  <Badge variant="outline" className="rounded-full border-border/60 text-xs uppercase tracking-wide">
+    <span className="text-muted-foreground">{label}:</span> <span className="ml-1 font-semibold">{value}</span>
+  </Badge>
+);
+
+const RadialGauge = ({
+  value,
+  label,
+  deity,
+}: {
+  value: number;
+  label: string;
+  deity: string;
+}) => (
+  <div className="relative flex h-24 w-24 items-center justify-center rounded-full border-2 border-sky-400/30 bg-background/70 shadow-inner">
+    <svg className="absolute inset-0" viewBox="0 0 120 120">
+      <circle
+        cx="60"
+        cy="60"
+        r="50"
+        stroke="#1e293b"
+        strokeWidth="10"
+        fill="transparent"
+      />
+      <circle
+        cx="60"
+        cy="60"
+        r="50"
+        stroke="#38bdf8"
+        strokeWidth="10"
+        strokeLinecap="round"
+        fill="transparent"
+        strokeDasharray={`${(value / 100) * 314}, 314`}
+        transform="rotate(-90 60 60)"
+      />
+    </svg>
+    <div className="text-center text-xs">
+      <p className="text-muted-foreground">{label}</p>
+      <p className="text-base font-semibold">{value}%</p>
+      <p className="text-[10px] uppercase tracking-wide text-primary">{deity}</p>
+    </div>
+  </div>
 );
 
 const CompletionBurst = () => (
@@ -609,9 +847,10 @@ interface WaterVisualProps {
   debris: DebrisPiece[];
   onDebrisClick: (id: number) => void;
   disabled: boolean;
+  tooltips?: boolean;
 }
 
-function WaterVisual({ progress, celebrate, debris, onDebrisClick, disabled }: WaterVisualProps) {
+function WaterVisual({ progress, celebrate, debris, onDebrisClick, disabled, tooltips }: WaterVisualProps) {
   const waterPalette = useMemo(() => {
     if (progress >= 100) return ["#60a5fa", "#38bdf8"];
     if (progress >= 60) return ["#22d3ee", "#0ea5e9"];
@@ -620,7 +859,7 @@ function WaterVisual({ progress, celebrate, debris, onDebrisClick, disabled }: W
   }, [progress]);
 
   return (
-    <div className="relative h-64 overflow-hidden rounded-2xl border border-sky-500/40 bg-slate-950">
+    <div className="relative h-72 overflow-hidden rounded-3xl border border-sky-500/40 bg-slate-950 shadow-2xl">
       <motion.div
         className="absolute inset-0"
         style={{
@@ -678,8 +917,22 @@ interface PollutionVisualProps {
 function PollutionVisual({ tiles, disabled, onCleanTile, celebrate }: PollutionVisualProps) {
   const columns = Math.ceil(Math.sqrt(tiles.length));
 
+  const getIcon = (type: WasteTile["type"]) => {
+    switch (type) {
+      case "plastic":
+        return "🧃";
+      case "industrial":
+        return "🏭";
+      case "organic":
+        return "🌾";
+      case "oil":
+      default:
+        return "🛢️";
+    }
+  };
+
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-amber-500/40 bg-gradient-to-br from-stone-900 via-stone-800 to-emerald-900 p-4">
+    <div className="relative overflow-hidden rounded-3xl border border-amber-500/40 bg-gradient-to-br from-stone-900 via-stone-800 to-emerald-900 p-6 shadow-xl">
       {celebrate && <CompletionBurst />}
       <div
         className="grid gap-3"
@@ -690,13 +943,21 @@ function PollutionVisual({ tiles, disabled, onCleanTile, celebrate }: PollutionV
             key={tile.id}
             onClick={() => onCleanTile(tile.id)}
             disabled={disabled || tile.cleared}
-            className={`h-20 rounded-xl border-2 transition ${
+            className={`h-24 rounded-xl border-2 px-3 py-2 text-left transition ${
               tile.cleared
                 ? "border-emerald-300 bg-gradient-to-br from-emerald-500 to-emerald-300 text-emerald-900 shadow-lg"
-                : "border-amber-600 bg-gradient-to-br from-amber-900 to-amber-700 text-amber-200"
+                : "border-amber-600 bg-gradient-to-br from-amber-900 to-amber-700 text-amber-100"
             }`}
           >
-            {tile.cleared ? "🌿 Restored" : "♻️ Tap to Clean"}
+            <div className="flex items-center gap-2 text-lg">
+              <span>{tile.cleared ? "🌿" : getIcon(tile.type)}</span>
+              <span className="text-xs uppercase tracking-wide">
+                {tile.cleared ? "Restored" : tile.type}
+              </span>
+            </div>
+            {!tile.cleared && (
+              <p className="text-xs opacity-80 mt-1">{tile.description}</p>
+            )}
           </button>
         ))}
       </div>
