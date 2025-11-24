@@ -2,6 +2,13 @@
 *A mythology-powered eco-adventure that transforms awareness into real-world action*
 
 ---
+The game blends:
+- Mythology  
+- Science  
+- Environmental activism  
+- Gamification  
+- Real-world challenges  
+- Optional on-chain verification
 
 ## 📌 Overview
 EcoChronos is an innovative, mythology-inspired environmental game and learning platform that blends story, science, and community action.  
