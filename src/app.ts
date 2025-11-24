@@ -2,6 +2,8 @@ import express, { Express } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import path from 'path';
+import fs from 'fs';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler';
 import { replayProtectionMiddleware } from './utils/replayProtection';
 
@@ -53,6 +55,19 @@ const createApp = (): Express => {
   app.use('/api/learning', learningRoutes);
   app.use('/api/map', mapRoutes);
   app.use('/api/badges', badgesRoutes);
+
+  // Frontend assets (serves Vite build when available)
+  const frontendDistPath = path.resolve(__dirname, '../../frontend/dist');
+  if (fs.existsSync(frontendDistPath)) {
+    app.use(express.static(frontendDistPath));
+
+    app.get('*', (req, res, next) => {
+      if (req.path.startsWith('/api')) {
+        return next();
+      }
+      res.sendFile(path.join(frontendDistPath, 'index.html'));
+    });
+  }
 
   // Error handling
   app.use(notFoundHandler);
