@@ -28,22 +28,24 @@ export function getXPRequiredForNextLevel(currentLevel: number): number {
 }
 
 export function getXPProgress(currentXP: number, currentLevel: number): {
+  currentXP: number;
   currentLevelXP: number;
   nextLevelXP: number;
-  progressPercent: number;
+  progressPercentage: number;
 } {
   const currentLevelXP = getXPForLevel(currentLevel);
   const nextLevelXP = getXPForLevel(currentLevel + 1);
   const xpInCurrentLevel = currentXP - currentLevelXP;
   const xpNeededForNextLevel = nextLevelXP - currentLevelXP;
-  const progressPercent = xpNeededForNextLevel > 0 
+  const progressPercentage = xpNeededForNextLevel > 0 
     ? Math.min(100, Math.round((xpInCurrentLevel / xpNeededForNextLevel) * 100))
     : 100;
   
   return {
+    currentXP,
     currentLevelXP,
     nextLevelXP,
-    progressPercent,
+    progressPercentage,
   };
 }
 

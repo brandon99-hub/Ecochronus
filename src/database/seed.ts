@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import { eq, and } from 'drizzle-orm';
+import bcrypt from 'bcrypt';
 import * as schema from './schema';
 
 // Load environment variables
@@ -47,7 +48,10 @@ async function seed() {
         isCorruptionMission: true,
         requiresCorruptionCleared: false,
         isActive: true,
-        requirements: {},
+        requirements: {
+          interaction: 'tree_regrowth',
+          tapsRequired: 5,
+        },
       },
       {
         title: 'River Cleanup: Poseidon\'s Call',
@@ -61,7 +65,10 @@ async function seed() {
         isCorruptionMission: true,
         requiresCorruptionCleared: false,
         isActive: true,
-        requirements: {},
+        requirements: {
+          interaction: 'water_purification',
+          debrisCount: 4,
+        },
       },
       {
         title: 'Urban Pollution: City of Waste',
@@ -75,7 +82,10 @@ async function seed() {
         isCorruptionMission: true,
         requiresCorruptionCleared: false,
         isActive: true,
-        requirements: {},
+        requirements: {
+          interaction: 'pollution_cleanup',
+          debrisCount: 3,
+        },
       },
       {
         title: 'Quiz Battle: Eco Knowledge',
@@ -100,6 +110,23 @@ async function seed() {
       if (existing.length === 0) {
         await db.insert(schema.missions).values(mission);
         console.log(`Created mission: ${mission.title}`);
+      } else {
+        await db.update(schema.missions)
+          .set({
+            description: mission.description,
+            type: mission.type,
+            category: mission.category,
+            god: mission.god,
+            region: mission.region,
+            rewardAmount: mission.rewardAmount,
+            corruptionLevel: mission.corruptionLevel,
+            isCorruptionMission: mission.isCorruptionMission,
+            requiresCorruptionCleared: mission.requiresCorruptionCleared,
+            isActive: mission.isActive,
+            requirements: mission.requirements,
+          })
+          .where(eq(schema.missions.id, existing[0].id));
+        console.log(`Updated mission: ${mission.title}`);
       }
     }
 
@@ -331,6 +358,106 @@ async function seed() {
         await db.insert(schema.badges).values(badge);
         console.log(`Created badge: ${badge.name}`);
       }
+    }
+
+    // Seed demo user for frontend login/testing
+    const demoEmail = process.env.SEED_DEMO_EMAIL || 'avatar@ecochronos.com';
+    const demoUsername = process.env.SEED_DEMO_USERNAME || 'earth_avatar';
+    const demoPassword = process.env.SEED_DEMO_PASSWORD || 'EcoChronos123!';
+
+    console.log('Ensuring demo user exists...');
+    const existingDemo = await db.select().from(schema.users)
+      .where(eq(schema.users.email, demoEmail))
+      .limit(1);
+
+    const passwordHash = await bcrypt.hash(demoPassword, 10);
+    let demoUser: typeof existingDemo[0] | undefined;
+
+    if (existingDemo.length === 0) {
+      const [created] = await db.insert(schema.users).values({
+        email: demoEmail,
+        username: demoUsername,
+        passwordHash,
+        level: 3,
+        xp: 450,
+        totalEcoKarma: 120,
+        corruptionCleared: 40,
+        selectedGod: 'zeus',
+      }).returning();
+      demoUser = created;
+      console.log(`Created demo user ${demoEmail}`);
+    } else {
+      const [updated] = await db.update(schema.users).set({
+        username: demoUsername,
+        passwordHash,
+        level: 3,
+        xp: 450,
+        totalEcoKarma: 120,
+        corruptionCleared: 40,
+        selectedGod: existingDemo[0].selectedGod || 'zeus',
+        updatedAt: new Date(),
+      }).where(eq(schema.users.id, existingDemo[0].id)).returning();
+      demoUser = updated;
+      console.log(`Updated demo user ${demoEmail}`);
+    }
+
+    if (demoUser) {
+      console.log('Seeding mission progress for demo user...');
+      const missionRows = await db.select({
+        id: schema.missions.id,
+        title: schema.missions.title,
+      }).from(schema.missions);
+
+      const missionMap = new Map(missionRows.map((mission) => [mission.title, mission.id]));
+
+      const progressSeeds = [
+        {
+          title: 'Awakening: Choose Your God',
+          status: 'COMPLETED' as const,
+          progress: 100,
+          startedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3),
+          completedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2),
+        },
+        {
+          title: 'Forest Restoration: First Steps',
+          status: 'IN_PROGRESS' as const,
+          progress: 45,
+          startedAt: new Date(Date.now() - 1000 * 60 * 60 * 12),
+          completedAt: null,
+        },
+      ];
+
+      for (const seed of progressSeeds) {
+        const missionId = missionMap.get(seed.title);
+        if (!missionId) continue;
+
+        const existingProgress = await db.select().from(schema.missionProgress)
+          .where(and(
+            eq(schema.missionProgress.userId, demoUser.id),
+            eq(schema.missionProgress.missionId, missionId)
+          ))
+          .limit(1);
+
+        const payload = {
+          userId: demoUser.id,
+          missionId,
+          status: seed.status,
+          progress: seed.progress,
+          startedAt: seed.startedAt,
+          completedAt: seed.completedAt,
+          updatedAt: new Date(),
+        };
+
+        if (existingProgress.length === 0) {
+          await db.insert(schema.missionProgress).values(payload);
+        } else {
+          await db.update(schema.missionProgress)
+            .set(payload)
+            .where(eq(schema.missionProgress.id, existingProgress[0].id));
+        }
+      }
+
+      console.log(`Demo credentials -> email: ${demoEmail} | password: ${demoPassword}`);
     }
 
     console.log('EcoChronos seeding completed successfully!');

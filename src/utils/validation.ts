@@ -57,6 +57,7 @@ export const verifyUploadSchema = z.object({
 
 export const selectGodSchema = z.object({
   god: z.enum(['zeus', 'athena', 'artemis', 'persephone'], { errorMap: () => ({ message: 'God must be zeus, athena, artemis, or persephone' }) }),
+  force: z.boolean().optional(),
 });
 
 export const completeLessonSchema = z.object({

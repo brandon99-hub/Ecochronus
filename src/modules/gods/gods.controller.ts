@@ -93,7 +93,7 @@ export const selectGod = async (req: AuthRequest, res: Response): Promise<Respon
       return sendError(res, validation.error, 400);
     }
 
-    const { god } = validation.data;
+    const { god, force } = validation.data;
 
     const userResults = await db.select({
       selectedGod: users.selectedGod,
@@ -105,8 +105,12 @@ export const selectGod = async (req: AuthRequest, res: Response): Promise<Respon
 
     const user = userResults[0];
 
-    if (user.selectedGod) {
-      return sendError(res, 'God already selected. Cannot change god.', 400);
+    if (user.selectedGod === god) {
+      return sendError(res, 'You are already aligned with this god', 400);
+    }
+
+    if (user.selectedGod && !force) {
+      return sendError(res, 'God already selected. Pass force=true to change alignment.', 400);
     }
 
     const [updatedUser] = await db.update(users)
