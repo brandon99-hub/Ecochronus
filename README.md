@@ -1,6 +1,6 @@
-# EcoChronos: Wrath of Zeus - API & Gameplay Frontend
+# EcoChronus: Wrath of Zeus - API & Gameplay Frontend
 
-EcoChronos is an educational adventure where players restore balance to Earth as the chosen Avatar of the gods. This repository now contains both the TypeScript/Express API and a Vite + React frontend that turns the API data into a fully playable dashboard, codex, mission board, and world map experience. JWT authentication, mission tracking, learning hub, god selection, corruption system, badges, reward management, and a cinematic UI all ship together.
+EcoChronus is an educational adventure where players restore balance to Earth as the chosen Avatar of the gods. This repository now contains both the TypeScript/Express API and a Vite + React frontend that turns the API data into a fully playable dashboard, codex, mission board, and world map experience. JWT authentication, mission tracking, learning hub, god selection, corruption system, badges, reward management, and a cinematic UI all ship together.
 
 ## 🚀 Features
 
@@ -12,7 +12,7 @@ EcoChronos is an educational adventure where players restore balance to Earth as
 - ✅ **Reward Management** - Automatic reward issuance with duplicate prevention
 - ✅ **Replay Attack Protection** - Nonce-based request validation
 
-### EcoChronos Game Features
+### EcoChronus Game Features
 - ✅ **God Selection** - Choose your divine patron (Zeus, Athena, Artemis, Persephone)
 - ✅ **Learning Hub** - Educational lessons and quiz battles
 - ✅ **Map & Corruption System** - Track corruption levels across regions
@@ -133,12 +133,12 @@ npm run db:seed
 
 The `db:generate` command will create all required tables including:
 - Core tables: `users`, `missions`, `mission_progress`, `proofs`, `rewards`, `vouchers`, `refresh_tokens`
-- EcoChronos tables: `lessons`, `quiz_questions`, `learning_progress`, `badges`, `user_badges`, `map_regions`
+- EcoChronus tables: `lessons`, `quiz_questions`, `learning_progress`, `badges`, `user_badges`, `map_regions`
 - Enums: `progress_status`, `proof_status`
 
 **Note**: The seed script checks for existing data before inserting, so it's safe to run multiple times without creating duplicates.
 
-To seed the database with EcoChronos missions, lessons, quizzes, and badges, run `npm run db:seed`.
+To seed the database with EcoChronus missions, lessons, quizzes, and badges, run `npm run db:seed`.
 
 ### 4. Run Development Server
 
@@ -663,7 +663,7 @@ Get lesson details with content.
       "description": "Learn the basics",
       "content": {
         "slides": [
-          { "type": "text", "content": "Welcome to EcoChronos!" }
+          { "type": "text", "content": "Welcome to EcoChronus!" }
         ]
       },
       "god": "zeus",
@@ -989,7 +989,7 @@ This script automatically tests:
 9. Mission filtering by category
 10. Reward listing
 
-**Note**: Make sure to run `npm run db:seed` before testing to populate the database with EcoChronos data.
+**Note**: Make sure to run `npm run db:seed` before testing to populate the database with EcoChronus data.
 
 ### Manual Testing
 
