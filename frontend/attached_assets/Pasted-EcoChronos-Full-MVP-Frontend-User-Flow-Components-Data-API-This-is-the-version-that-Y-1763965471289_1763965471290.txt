@@ -1,0 +1,269 @@
+EcoChronos — Full MVP (Frontend + User Flow + Components + Data + API)
+
+This is the version that:
+
+You can build in hours.
+
+You can demo confidently.
+
+Works on Replit with almost no config.
+
+Has no uploads, no storage, no complicated logic.
+
+✅ 1. MVP GOAL
+
+Let a user:
+
+Create an account
+
+Log in
+
+View eco missions
+
+Start a mission
+
+Complete a mission by submitting a simple text-based “evidence” form
+
+Earn points
+
+View their total points and completed missions count
+
+That's the entire MVP loop.
+
+✅ 2. FRONTEND SCREENS (4 TOTAL)
+Screen 1 — Authentication (Login & Signup)
+
+Route: /auth
+Features:
+
+Email
+
+Password
+
+Toggle “Have an account? Log in / Sign up”
+
+On success: store JWT → redirect to dashboard
+
+API:
+
+POST /auth/register
+
+POST /auth/login
+
+Screen 2 — Dashboard (Mission List + Quick Stats)
+
+Route: /dashboard
+Shows:
+
+User points: Total Points: X
+
+Completed missions: Completed: Y
+
+Mission List with each mission:
+
+title
+
+description
+
+points
+
+status: AVAILABLE / ACTIVE / COMPLETED
+
+Action buttons:
+
+AVAILABLE → Start
+
+ACTIVE → Complete
+
+COMPLETED → disabled
+
+API:
+
+GET /missions
+
+GET /user/stats
+
+POST /missions/{id}/start
+
+Screen 3 — Mission Detail
+
+Route: /mission/:id
+
+Shows:
+
+title
+
+description
+
+points
+
+“Start Mission” button (if not started)
+
+“Complete Mission” button (if active)
+
+“Already Completed” status
+
+This screen is optional but good UX.
+If you want, you can skip it to simplify routing.
+
+Screen 4 — Mission Completion Form
+
+Route: /mission/:id/complete
+
+Fields:
+
+Textarea: “What did you do?” (required)
+
+Dropdown: Activity Type (optional)
+
+Cleanup
+
+Tree Planting
+
+Recycling
+
+Energy Saving
+
+Number input: Quantity (optional)
+
+Button: Submit Completion
+
+API:
+POST /missions/{id}/complete
+Payload:
+
+{
+  "description": "Collected 2kg of plastic waste in the estate.",
+  "category": "Recycling",
+  "quantity": 2
+}
+
+
+On success:
+
+redirect to dashboard
+
+stats update automatically
+
+✅ 3. FRONTEND COMPONENTS (MINIMAL SET)
+/src/components/
+
+AuthForm.tsx
+
+MissionCard.tsx
+
+Navbar.tsx (very basic)
+
+/src/pages/
+
+AuthPage.tsx
+
+Dashboard.tsx
+
+MissionPage.tsx
+
+CompleteMissionPage.tsx
+
+/src/api/
+
+client.ts — fetch wrapper (inject JWT)
+
+auth.ts
+
+missions.ts
+
+user.ts
+
+✅ 4. API ENDPOINTS (FULL MVP LIST)
+Authentication
+
+POST /auth/register
+
+POST /auth/login
+
+Missions
+
+GET /missions
+
+POST /missions/:id/start
+
+POST /missions/:id/complete
+
+User
+
+GET /user/stats
+
+✅ 5. MINIMAL DATA FLOW
+Login Flow
+
+User enters email/pass
+
+API returns { token }
+
+Store token in localStorage
+
+Redirect → /dashboard
+
+Dashboard Flow
+
+Fetch /user/stats
+
+Fetch /missions
+
+Render everything
+
+If user clicks:
+
+Start → call /missions/{id}/start
+
+Complete → redirect to /mission/{id}/complete
+
+Mission Completion Flow
+
+User fills form
+
+Submit → /missions/{id}/complete
+
+Backend:
+
+Marks mission complete
+
+Adds points
+
+Redirect → /dashboard
+
+✅ 6. MVP FRONTEND BEHAVIOR RULES
+
+If token missing, redirect user to /auth.
+
+If API returns 401, clear token → redirect to /auth.
+
+Keep UI dead simple: lists, buttons, forms.
+
+No file uploads, no images, no animations.
+
+Use only useState and useEffect.
+
+Tailwind optional — plain CSS is fine.
+
+✅ 7. MVP FILE STRUCTURE
+src/
+  api/
+    client.ts
+    auth.ts
+    missions.ts
+    user.ts
+
+  components/
+    AuthForm.tsx
+    MissionCard.tsx
+    Navbar.tsx
+
+  pages/
+    AuthPage.tsx
+    Dashboard.tsx
+    MissionPage.tsx
+    CompleteMissionPage.tsx
+
+  App.tsx
+  main.tsx
