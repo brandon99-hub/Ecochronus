@@ -1,6 +1,6 @@
-# EcoChronos: Wrath of Zeus - Backend API
+# EcoChronos: Wrath of Zeus - API & Gameplay Frontend
 
-A pure backend-only REST API for **EcoChronos**, an educational adventure game where players restore balance to Earth as the chosen Avatar of the gods. Built with TypeScript and Express, featuring JWT authentication, mission tracking, learning hub, god selection, corruption system, badges, and reward management.
+EcoChronos is an educational adventure where players restore balance to Earth as the chosen Avatar of the gods. This repository now contains both the TypeScript/Express API and a Vite + React frontend that turns the API data into a fully playable dashboard, codex, mission board, and world map experience. JWT authentication, mission tracking, learning hub, god selection, corruption system, badges, reward management, and a cinematic UI all ship together.
 
 ## 🚀 Features
 
@@ -21,20 +21,24 @@ A pure backend-only REST API for **EcoChronos**, an educational adventure game w
 - ✅ **Eco-Karma** - Track environmental impact and rewards
 - ✅ **Mission Filtering** - Filter by category, god, or region
 
+### Frontend Experience Highlights
+- 🧭 **Mission Control Dashboard** - React Query driven mission feed with filters, stats, and toast-based feedback.
+- 🗺️ **Interactive World Map** - `MapPage` visualizes mission progress per region with animated corruption states.
+- ⚔️ **Cinematic Mission Flow** - `MissionPage` and completion modals guide players through quest acceptance, progress, and rewards.
+- 📚 **Codex & Learning Hub** - Lesson stages, deity lore, and quizzes rendered with reusable lesson components and radial progress.
+- 🎖️ **Rewards & Inventory Panels** - Rewards history, badge claiming, and inventory summaries powered by API pagination.
+
 ### Technical Features
 - ✅ **RESTful API** - Clean JSON-only endpoints
 - ✅ **Type Safety** - Full TypeScript support with Drizzle ORM
 
 ## 🛠 Tech Stack
 
-- **Language**: TypeScript
-- **Framework**: Express.js
-- **Database**: PostgreSQL with Drizzle ORM
-- **Authentication**: JWT (Access + Refresh tokens)
-- **OAuth**: Google Sign-In support
-- **Storage**: Google Cloud Storage
-- **Validation**: Zod schema validation
-- **Hosting**: Render or any cloud platform
+| Layer | Key Technologies |
+| --- | --- |
+| Backend API | TypeScript, Express.js, Drizzle ORM + PostgreSQL, JWT + Refresh Tokens, Google OAuth, Google Cloud Storage, Zod validation |
+| Frontend Client | React 18, Vite 5, TypeScript, Wouter routing, TanStack Query, TailwindCSS + Radix UI, Framer Motion, Lucide icons |
+| Shared Tooling | tsx, ESLint/TSC, npm workspaces (root + `frontend`), Render-ready build output (`dist/public` for UI, `dist/` for API) |
 
 ## 📁 Project Structure
 
@@ -62,12 +66,26 @@ A pure backend-only REST API for **EcoChronos**, an educational adventure game w
   /server.ts       # Server entry point and graceful shutdown
 ```
 
+### Frontend Client Structure (`/frontend/client`)
+
+```
+/src
+  App.tsx            # Wouter router guarding auth-only routes
+  main.tsx           # React entry + providers
+  /pages             # Dashboard, Map, Missions, Codex, Rewards, Profile, etc.
+  /components        # Mission cards, map regions, lessons, shared UI (Radix-based)
+  /hooks             # Custom hooks (toasts, quizzes, responsive helpers)
+  /lib               # API client, react-query configuration, mission metadata
+  /types             # Shared DTOs (missions, regions, maps)
+```
+
 ## Setup
 
 ### 1. Install Dependencies
 
 ```bash
-npm install
+npm install                      # backend API
+npm --prefix frontend install    # Vite client
 ```
 
 ### 2. Environment Variables
@@ -97,6 +115,12 @@ GOOGLE_CLOUD_KEYFILE=path/to/keyfile.json
 GOOGLE_CLOUD_BUCKET_NAME=your-bucket-name
 ```
 
+The frontend can point to any running API. Create `frontend/.env` (or use `.env.local`) to override the default proxyed `/api` base:
+
+```env
+VITE_API_BASE_URL=http://localhost:3000/api
+```
+
 ### 3. Database Setup
 
 ```bash
@@ -119,7 +143,11 @@ To seed the database with EcoChronos missions, lessons, quizzes, and badges, run
 ### 4. Run Development Server
 
 ```bash
+# Terminal 1 - API (http://localhost:3000)
 npm run dev
+
+# Terminal 2 - Frontend (http://localhost:5173)
+npm --prefix frontend run dev
 ```
 
 ### 5. Build for Production
@@ -128,6 +156,17 @@ npm run dev
 npm run build
 npm start
 ```
+
+`npm run build` installs + bundles the frontend into `frontend/dist/public` and compiles the API into `dist/`. Serve the API (e.g., Render, Fly) and expose the `dist/public` assets via Express' static middleware.
+
+## 🎨 Frontend Walkthrough
+
+- **Routing & State** — `App.tsx` wires Wouter routes with an auth-aware router while `QueryClientProvider`, `Toaster`, and Radix `TooltipProvider` wrap the tree for data fetching and notifications.
+- **Dashboard** — `pages/Dashboard.tsx` fetches stats/missions with TanStack Query, exposes filters, starts missions via optimistic mutations, and highlights avatar progress, eco karma, and quest pools.
+- **Mission Flow** — `pages/MissionPage.tsx` coordinates mission state, mutation-driven completion, cinematic summaries, and contextual reward modals powered by `components/missions`.
+- **World Map** — `pages/MapPage.tsx` synthesizes mission data into `RegionNode` objects, animates corruption levels, and lets players jump into mission briefings from the sidebar.
+- **Supporting Screens** — Additional pages (Codex, CompleteMission, Rewards, Profile, Inventory) reuse the shared API client, shadcn/Radix UI library, and design tokens defined in `index.css`.
+- **Data Layer** — `lib/api.ts` centralizes REST calls, handles JWT persistence, augments backend missions with derived status, and enforces nonce/timestamp headers for replay protection.
 
 ## 📡 API Endpoints
 
