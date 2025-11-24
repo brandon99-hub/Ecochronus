@@ -65,7 +65,7 @@ export default function Dashboard() {
   };
 
   const handleCompleteMission = (missionId: string) => {
-    setLocation(`/mission/${missionId}/complete`);
+    setLocation(`/mission/${missionId}`);
   };
 
   const categories = useMemo(

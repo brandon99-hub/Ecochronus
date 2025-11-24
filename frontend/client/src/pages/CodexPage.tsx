@@ -11,6 +11,7 @@ import { api, God, Lesson, LessonDetail, LearningProgress, SelectedGod, UserStat
 import { Sparkles, Book, CheckCircle2, Scroll, Flame, Hourglass, ArrowLeft, Zap, RefreshCcw } from "lucide-react";
 import { motion } from "framer-motion";
 import { GodCard } from "@/components/GodCard";
+import { LessonStage } from "@/components/lessons/LessonStage";
 
 export default function CodexPage() {
   const [, setLocation] = useLocation();
@@ -79,43 +80,6 @@ export default function CodexPage() {
     },
   });
 
-  const renderLessonContent = () => {
-    if (!lessonDetail?.content) {
-      return <p className="text-sm text-muted-foreground">No content available.</p>;
-    }
-
-    if (typeof lessonDetail.content === "string") {
-      return lessonDetail.content.split("\n").map((paragraph, index) => (
-        <p key={index} className="text-sm text-muted-foreground">
-          {paragraph}
-        </p>
-      ));
-    }
-
-    const slides = Array.isArray((lessonDetail.content as { slides?: unknown[] }).slides)
-      ? (lessonDetail.content as { slides?: Array<Record<string, unknown>> }).slides
-      : null;
-
-    if (slides && slides.length > 0) {
-      return slides.map((slide, index) => (
-        <div key={index} className="space-y-1 rounded-lg border border-border p-3">
-          {"title" in slide && typeof slide.title === "string" && (
-            <p className="font-semibold text-primary">{slide.title}</p>
-          )}
-          {"body" in slide && typeof slide.body === "string" && (
-            <p className="text-sm text-muted-foreground">{slide.body}</p>
-          )}
-        </div>
-      ));
-    }
-
-    return (
-      <pre className="rounded-lg bg-muted/40 p-3 text-xs text-muted-foreground overflow-x-auto">
-        {JSON.stringify(lessonDetail.content, null, 2)}
-      </pre>
-    );
-  };
-
   if (lessonsLoading) {
     return (
       <div className="min-h-screen bg-background">
@@ -176,7 +140,7 @@ export default function CodexPage() {
           </div>
         </motion.section>
 
-        <section className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
+        <section className="grid gap-6 lg:grid-cols-[320px_1fr]">
           <Card className="border border-primary/20 bg-card/80">
             <CardHeader className="flex items-center gap-3">
               <Zap className="h-6 w-6 text-primary" />
@@ -266,66 +230,21 @@ export default function CodexPage() {
             </CardContent>
           </Card>
 
-          <Card className="border border-primary/20 bg-card/80">
-            <CardHeader className="flex items-center gap-3">
-              <Flame className="h-6 w-6 text-primary" />
-              <div>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                  Lesson Detail
-                </p>
-                <CardTitle className="font-serif text-3xl">
-                  {lessonDetail?.title ?? "Select a lesson"}
-                </CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {lessonLoading || !lessonDetail ? (
-                <p className="text-muted-foreground text-sm">Choose a lesson from the list.</p>
-              ) : (
-                <>
-                  <p className="text-sm text-muted-foreground">{lessonDetail.description}</p>
-                  <div className="grid gap-4 md:grid-cols-3">
-                    <div className="rounded-lg border border-border/60 bg-background/60 p-3">
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Patron Deity</p>
-                      <p className="font-semibold">{lessonDetail.god ?? "Universal Wisdom"}</p>
-                    </div>
-                    <div className="rounded-lg border border-border/60 bg-background/60 p-3">
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Chapter</p>
-                      <p className="font-semibold">#{lessonDetail.order}</p>
-                    </div>
-                    <div className="rounded-lg border border-border/60 bg-background/60 p-3">
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Status</p>
-                      <p className="font-semibold">
-                        {lessonDetail.progress?.completed ? "Completed" : "In progress"}
-                      </p>
-                    </div>
-                  </div>
-                  <Separator />
-                  <div className="prose prose-sm max-w-none text-muted-foreground space-y-4">
-                    {renderLessonContent()}
-                  </div>
-                </>
-              )}
-            </CardContent>
-            {lessonDetail && (
-              <CardContent className="border-t border-border/60 py-4 flex flex-wrap items-center gap-4">
-                <Badge variant="secondary">
-                  Attempts: {lessonDetail.progress?.quizAttempts ?? 0}
-                </Badge>
-                <Badge variant="outline">
-                  Score: {lessonDetail.progress?.quizScore ?? "—"}%
-                </Badge>
-                <Button
-                  className="ml-auto gap-2"
-                  disabled={completeLessonMutation.isPending || lessonDetail.progress?.completed}
-                  onClick={() => completeLessonMutation.mutate()}
-                >
-                  <CheckCircle2 className="h-4 w-4" />
-                  {lessonDetail.progress?.completed ? "Already completed" : "Mark as completed"}
-                </Button>
-              </CardContent>
+          <div className="lg:col-span-2 space-y-6">
+            {lessonLoading || !lessonDetail ? (
+              <Card className="border border-border/50">
+                <CardContent className="py-16 text-center text-muted-foreground">
+                  Select a lesson from the index to begin.
+                </CardContent>
+              </Card>
+            ) : (
+              <LessonStage
+                lesson={lessonDetail}
+                isCompleting={completeLessonMutation.isPending}
+                onComplete={() => completeLessonMutation.mutate()}
+              />
             )}
-          </Card>
+          </div>
         </section>
       </main>
     </div>

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation, useParams } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Navbar } from "@/components/Navbar";
@@ -14,6 +14,7 @@ import { getMissionIcon } from "@/lib/missions";
 import { Badge as UIBadge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { MissionInteraction } from "@/components/missions/HealingScene";
+import { MissionCompletionModal } from "@/components/missions/MissionCompletionModal";
 
 export default function MissionPage() {
   const { id } = useParams();
@@ -39,6 +40,12 @@ export default function MissionPage() {
 
   const mission = missions?.find((m) => m.id === id);
 
+  const [completionSummary, setCompletionSummary] = useState<{
+    coins: number;
+    xp: number;
+    ecoKarma: number;
+  } | null>(null);
+
   const startMissionMutation = useMutation({
     mutationFn: () => api.startMission(id!),
     onSuccess: () => {
@@ -58,12 +65,41 @@ export default function MissionPage() {
     },
   });
 
+  const completeMissionMutation = useMutation({
+    mutationFn: () => api.completeMission(id!),
+    onSuccess: (_, __, context) => {
+      queryClient.invalidateQueries({ queryKey: ['/missions'] });
+      queryClient.invalidateQueries({ queryKey: ['/user/stats'] });
+
+      const ecoKarmaGain =
+        context?.mission?.isCorruptionMission && context.mission.corruptionLevel
+          ? context.mission.corruptionLevel
+          : 0;
+
+      setCompletionSummary({
+        coins: context?.mission?.points ?? mission?.points ?? 0,
+        xp: context?.mission ? Math.round(50 + (context.mission.points ?? 0) / 10) : 50,
+        ecoKarma: ecoKarmaGain,
+      });
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Failed to complete mission",
+        description: error instanceof Error ? error.message : "Please try again.",
+      });
+    },
+    onMutate: async () => {
+      return { mission };
+    },
+  });
+
   const handleStartMission = () => {
     startMissionMutation.mutate();
   };
 
   const handleComplete = () => {
-    setLocation(`/mission/${id}/complete`);
+    completeMissionMutation.mutate();
   };
 
   const handleBack = () => {
@@ -302,6 +338,19 @@ export default function MissionPage() {
           </Card>
         </section>
       </main>
+      {completionSummary && (
+        <MissionCompletionModal
+          open={Boolean(completionSummary)}
+          onOpenChange={(open) => {
+            if (!open) {
+              setCompletionSummary(null);
+            }
+          }}
+          mission={mission}
+          summary={completionSummary}
+          onViewReport={() => setLocation(`/mission/${mission.id}/complete`)}
+        />
+      )}
     </div>
   );
 }

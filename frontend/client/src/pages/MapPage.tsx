@@ -9,14 +9,8 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { api, Mission, UserStats } from "@/lib/api";
 import { Sparkles, Map as MapIcon, Target, Shield, Compass, AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
-
-interface RegionNode {
-  id: string;
-  name: string;
-  corruptionLevel: number;
-  missions: string[];
-  status: "SAFE" | "UNSTABLE" | "CRITICAL";
-}
+import { RegionCard } from "@/components/map/RegionCard";
+import { RegionNode } from "@/types/map";
 
 export default function MapPage() {
   const [, setLocation] = useLocation();
@@ -48,12 +42,28 @@ export default function MapPage() {
         grouped.set(regionName, {
           id: regionName.toLowerCase().replace(/\s+/g, "-"),
           name: regionName,
-          corruptionLevel: Math.min(100, (mission.points || 10) * 2),
+          corruptionLevel: 100,
           missions: [],
           status: "UNSTABLE",
+          completedMissions: 0,
+          totalMissions: 0,
         });
       }
-      grouped.get(regionName)!.missions.push(mission.id);
+      const region = grouped.get(regionName)!;
+      region.missions.push(mission.id);
+      region.totalMissions += 1;
+      if (mission.status === "COMPLETED") {
+        region.completedMissions += 1;
+      }
+      const completionRatio =
+        region.totalMissions > 0 ? region.completedMissions / region.totalMissions : 0;
+      region.corruptionLevel = Math.round(100 - completionRatio * 100);
+      region.status =
+        region.corruptionLevel <= 30
+          ? "SAFE"
+          : region.corruptionLevel <= 60
+          ? "UNSTABLE"
+          : "CRITICAL";
     });
     return Array.from(grouped.values());
   }, [missions]);
@@ -133,33 +143,12 @@ export default function MapPage() {
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-2">
               {regions.map((region) => (
-                <button
+                <RegionCard
                   key={region.id}
-                  onClick={() => setSelectedRegion(region)}
-                  className={`rounded-2xl border px-4 py-4 text-left transition hover:-translate-y-1 ${
-                    selectedRegion?.id === region.id
-                      ? "border-primary/60 bg-primary/10 shadow-lg"
-                      : "border-border hover:bg-muted/20"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <p className="font-semibold">{region.name}</p>
-                    <Badge
-                      className={
-                        region.corruptionLevel > 70
-                          ? "bg-destructive/20 text-destructive"
-                          : region.corruptionLevel > 40
-                          ? "bg-accent/20 text-accent"
-                          : "bg-primary/20 text-primary"
-                      }
-                    >
-                      {region.corruptionLevel}%
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    {region.missions.length} linked quests
-                  </p>
-                </button>
+                  region={region}
+                  isSelected={selectedRegion?.id === region.id}
+                  onSelect={() => setSelectedRegion(region)}
+                />
               ))}
             </CardContent>
           </Card>

@@ -175,6 +175,20 @@ export interface LessonDetail {
   } | null;
 }
 
+export interface LessonQuizQuestion {
+  id: string;
+  question: string;
+  options: string[];
+  order?: number | null;
+}
+
+export interface LessonQuizResult {
+  questionId: string;
+  isCorrect: boolean;
+  correctAnswer: number;
+  explanation?: string | null;
+}
+
 export interface LearningProgress {
   completedLessons: number;
   totalLessons: number;
@@ -358,6 +372,20 @@ class ApiClient {
 
   async completeLesson(id: string): Promise<void> {
     await this.request(`/learning/lessons/${id}/complete`, { method: "POST" });
+  }
+
+  async getLessonQuiz(id: string): Promise<{ lessonId: string; questions: LessonQuizQuestion[] }> {
+    const response = await this.request<{ quiz: { lessonId: string; questions: LessonQuizQuestion[] } }>(
+      `/learning/quizzes/${id}`
+    );
+    return response.quiz;
+  }
+
+  async submitLessonQuiz(id: string, answers: number[]): Promise<{ score: number; passed: boolean; results: LessonQuizResult[] }> {
+    return this.request<{ score: number; passed: boolean; results: LessonQuizResult[] }>(`/learning/quizzes/${id}/submit`, {
+      method: "POST",
+      body: JSON.stringify({ answers }),
+    });
   }
 
   async getLearningProgress(): Promise<LearningProgress> {
