@@ -1,7 +1,19 @@
 // Helper functions for common Drizzle operations
 import { db } from './index';
-import { users, refreshTokens, missions, missionProgress, proofs, rewards, vouchers } from './schema';
-import { eq, and, or, desc, asc, sql } from 'drizzle-orm';
+import {
+  users,
+  refreshTokens,
+  missions,
+  missionProgress,
+  proofs,
+  rewards,
+  progressStatusEnum,
+  proofStatusEnum,
+} from './schema';
+import { eq, and, or, desc, sql } from 'drizzle-orm';
+
+type ProgressStatus = (typeof progressStatusEnum.enumValues)[number];
+type ProofStatus = (typeof proofStatusEnum.enumValues)[number];
 
 // User queries
 export const userQueries = {
@@ -58,13 +70,31 @@ export const missionProgressQueries = {
   findByUserId: (userId: string) =>
     db.select().from(missionProgress).where(eq(missionProgress.userId, userId)),
   
-  create: (data: { userId: string; missionId: string; status?: string; progress?: number; startedAt?: Date | null }) =>
+  create: (data: {
+    userId: string;
+    missionId: string;
+    status?: ProgressStatus;
+    progress?: number;
+    startedAt?: Date | null;
+  }) =>
     db.insert(missionProgress).values(data).returning(),
   
-  update: (id: string, data: Partial<{ status: string; progress: number; startedAt: Date | null; completedAt: Date | null }>) =>
+  update: (
+    id: string,
+    data: Partial<{
+      status: ProgressStatus;
+      progress: number;
+      startedAt: Date | null;
+      completedAt: Date | null;
+    }>
+  ) =>
     db.update(missionProgress).set({ ...data, updatedAt: new Date() }).where(eq(missionProgress.id, id)).returning(),
   
-  upsert: async (userId: string, missionId: string, data: { status: string; progress: number; startedAt: Date | null }) => {
+  upsert: async (
+    userId: string,
+    missionId: string,
+    data: { status: ProgressStatus; progress: number; startedAt: Date | null }
+  ) => {
     const existing = await missionProgressQueries.findByUserIdAndMissionId(userId, missionId);
     if (existing.length > 0) {
       return missionProgressQueries.update(existing[0].id, data);
@@ -81,16 +111,26 @@ export const proofQueries = {
   findByMissionProgressId: (missionProgressId: string) =>
     db.select().from(proofs).where(eq(proofs.missionProgressId, missionProgressId)),
   
-  findByMissionProgressIdAndStatus: (missionProgressId: string, status: 'APPROVED' | 'PENDING' | 'REJECTED') =>
+  findByMissionProgressIdAndStatus: (missionProgressId: string, status: ProofStatus) =>
     db.select().from(proofs)
       .where(and(eq(proofs.missionProgressId, missionProgressId), eq(proofs.status, status)))
       .orderBy(desc(proofs.createdAt))
       .limit(1),
   
-  create: (data: { userId: string; missionProgressId: string; type: string; storageUrl: string; storageKey: string; status?: string }) =>
+  create: (data: {
+    userId: string;
+    missionProgressId: string;
+    type: string;
+    storageUrl: string;
+    storageKey: string;
+    status?: ProofStatus;
+  }) =>
     db.insert(proofs).values(data).returning(),
   
-  update: (id: string, data: Partial<{ status: string; antiCheatScore: number | null; verifiedAt: Date | null }>) =>
+  update: (
+    id: string,
+    data: Partial<{ status: ProofStatus; antiCheatScore: number | null; verifiedAt: Date | null }>
+  ) =>
     db.update(proofs).set({ ...data, updatedAt: new Date() }).where(eq(proofs.id, id)).returning(),
 };
 
@@ -105,14 +145,18 @@ export const rewardQueries = {
     const page = filters?.page || 1;
     const limit = filters?.limit || 20;
     const skip = (page - 1) * limit;
-    
-    let query = db.select().from(rewards).where(eq(rewards.userId, userId));
-    
-    if (filters?.type) {
-      query = query.where(and(eq(rewards.userId, userId), eq(rewards.type, filters.type))) as any;
-    }
-    
-    return query.orderBy(desc(rewards.issuedAt)).limit(limit).offset(skip);
+
+    const whereClause = filters?.type
+      ? and(eq(rewards.userId, userId), eq(rewards.type, filters.type))
+      : eq(rewards.userId, userId);
+
+    return db
+      .select()
+      .from(rewards)
+      .where(whereClause)
+      .orderBy(desc(rewards.issuedAt))
+      .limit(limit)
+      .offset(skip);
   },
   
   count: (userId: string, filters?: { type?: string }) => {

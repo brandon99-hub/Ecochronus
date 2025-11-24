@@ -6,8 +6,8 @@ if (!jwtSecret || !jwtRefreshSecret) {
 }
 
 export const jwtConfig = {
-  secret: jwtSecret,
-  refreshSecret: jwtRefreshSecret,
+  secret: jwtSecret!,
+  refreshSecret: jwtRefreshSecret!,
   accessExpiry: process.env.JWT_ACCESS_EXPIRY || '15m',
   refreshExpiry: process.env.JWT_REFRESH_EXPIRY || '7d',
 };
