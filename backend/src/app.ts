@@ -57,7 +57,7 @@ const createApp = (): Express => {
   app.use('/api/badges', badgesRoutes);
 
   // Frontend assets (serves Vite build when available)
-  const frontendDistPath = path.resolve(__dirname, '../frontend/dist/public');
+  const frontendDistPath = path.resolve(__dirname, '../../frontend/dist/public');
   if (fs.existsSync(frontendDistPath)) {
     app.use(express.static(frontendDistPath));
 

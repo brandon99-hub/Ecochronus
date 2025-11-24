@@ -43,27 +43,36 @@ EcoChronus is an educational adventure where players restore balance to Earth as
 ## 📁 Project Structure
 
 ```
-/src
-  /config          # Configuration files (database, JWT, storage, OAuth)
-  /database        # Drizzle ORM schema, migrations, and connection
-    - schema.ts    # Database schema definitions
-    - index.ts     # Database client initialization
-    - generate.ts  # Table generation script
-    - seed.ts      # Database seeding script
-  /modules
-    /auth          # Authentication (signup, login, Google OAuth, refresh, logout)
-    /users         # User management (profile, device tracking, stats)
-    /missions      # Mission tracking (list, start, progress, complete with filtering)
-    /proofs        # Proof upload (signed URLs) and verification with anti-cheat
-    /rewards       # Reward issuance and tracking (duplicate prevention)
-    /gods          # God selection (list, select, get selected god)
-    /learning      # Learning hub (lessons, quizzes, progress tracking)
-    /map           # Map state and corruption system (regions, corruption clearing)
-    /badges        # Badge system (list, claim, auto-awarding)
-  /utils           # Utilities (response formatting, JWT, storage, anti-cheat, password hashing)
-  /middlewares     # Express middlewares (auth, error handling, replay protection)
-  /app.ts          # Express app setup and route registration
-  /server.ts       # Server entry point and graceful shutdown
+/backend
+  /src
+    /config          # Configuration files (database, JWT, storage, OAuth)
+    /database        # Drizzle ORM schema, migrations, and connection
+      - schema.ts    # Database schema definitions
+      - index.ts     # Database client initialization
+      - generate.ts  # Table generation script
+      - seed.ts      # Database seeding script
+    /modules
+      /auth          # Authentication (signup, login, Google OAuth, refresh, logout)
+      /users         # User management (profile, device tracking, stats)
+      /missions      # Mission tracking (list, start, progress, complete with filtering)
+      /proofs        # Proof upload (signed URLs) and verification with anti-cheat
+      /rewards       # Reward issuance and tracking (duplicate prevention)
+      /gods          # God selection (list, select, get selected god)
+      /learning      # Learning hub (lessons, quizzes, progress tracking)
+      /map           # Map state and corruption system (regions, corruption clearing)
+      /badges        # Badge system (list, claim, auto-awarding)
+    /utils           # Utilities (response formatting, JWT, storage, anti-cheat, password hashing)
+    /middlewares     # Express middlewares (auth, error handling, replay protection)
+    /app.ts          # Express app setup and route registration
+    /server.ts       # Server entry point and graceful shutdown
+  /prisma            # Database migrations (if using Prisma)
+  /dist              # Compiled TypeScript output
+  test-api.ps1       # PowerShell API testing script
+  test-api.sh        # Bash API testing script
+  test-api.http      # VS Code REST Client test file
+  package.json       # Backend dependencies and scripts
+  tsconfig.json      # TypeScript configuration
+  .env               # Backend environment variables
 ```
 
 ### Frontend Client Structure (`/frontend/client`)
@@ -84,13 +93,21 @@ EcoChronus is an educational adventure where players restore balance to Earth as
 ### 1. Install Dependencies
 
 ```bash
+cd backend
 npm install                      # backend API
+cd ../frontend
+npm install                      # Vite client
+```
+
+Or from the root directory:
+```bash
+npm --prefix backend install     # backend API
 npm --prefix frontend install    # Vite client
 ```
 
 ### 2. Environment Variables
 
-Create a `.env` file in the root directory with the following variables:
+Create a `.env` file in the `backend/` directory with the following variables:
 
 ```env
 # Database
@@ -124,11 +141,18 @@ VITE_API_BASE_URL=http://localhost:3000/api
 ### 3. Database Setup
 
 ```bash
-# Create database tables
+# From backend directory
+cd backend
 npm run db:generate
 
 # (Optional) Seed database with test missions
 npm run db:seed
+```
+
+Or from the root directory:
+```bash
+npm --prefix backend run db:generate
+npm --prefix backend run db:seed
 ```
 
 The `db:generate` command will create all required tables including:
@@ -138,13 +162,26 @@ The `db:generate` command will create all required tables including:
 
 **Note**: The seed script checks for existing data before inserting, so it's safe to run multiple times without creating duplicates.
 
-To seed the database with EcoChronus missions, lessons, quizzes, and badges, run `npm run db:seed`.
+To seed the database with EcoChronus missions, lessons, quizzes, and badges, run `npm --prefix backend run db:seed` (or `cd backend && npm run db:seed`).
 
 ### 4. Run Development Server
 
+**Backend API:**
+```bash
+cd backend
+npm run dev
+```
+
+**Frontend Client:**
+```bash
+cd frontend
+npm run dev
+```
+
+Or from the root directory:
 ```bash
 # Terminal 1 - API (http://localhost:3000)
-npm run dev
+npm --prefix backend run dev
 
 # Terminal 2 - Frontend (http://localhost:5173)
 npm --prefix frontend run dev
@@ -153,11 +190,18 @@ npm --prefix frontend run dev
 ### 5. Build for Production
 
 ```bash
+cd backend
 npm run build
 npm start
 ```
 
-`npm run build` installs + bundles the frontend into `frontend/dist/public` and compiles the API into `dist/`. Serve the API (e.g., Render, Fly) and expose the `dist/public` assets via Express' static middleware.
+`npm run build` installs + bundles the frontend into `frontend/dist/public` and compiles the API into `backend/dist/`. Serve the API (e.g., Render, Fly) and expose the `frontend/dist/public` assets via Express' static middleware.
+
+Or from the root directory:
+```bash
+npm --prefix backend run build
+npm --prefix backend start
+```
 
 ## 🎨 Frontend Walkthrough
 
@@ -973,6 +1017,12 @@ The database schema includes the following tables:
 A PowerShell test script is included for easy API testing:
 
 ```powershell
+.\backend\test-api.ps1
+```
+
+Or from the backend directory:
+```powershell
+cd backend
 .\test-api.ps1
 ```
 
@@ -989,12 +1039,12 @@ This script automatically tests:
 9. Mission filtering by category
 10. Reward listing
 
-**Note**: Make sure to run `npm run db:seed` before testing to populate the database with EcoChronus data.
+**Note**: Make sure to run `npm --prefix backend run db:seed` (or `cd backend && npm run db:seed`) before testing to populate the database with EcoChronus data.
 
 ### Manual Testing
 
 You can also use:
-- **VS Code REST Client**: Use `test-api.http` file
+- **VS Code REST Client**: Use `backend/test-api.http` file
 - **Postman/Insomnia**: Import endpoints from API documentation
 - **curl/HTTPie**: Manual command-line testing
 
