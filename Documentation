@@ -1,0 +1,183 @@
+## 📌 Overview
+
+Ecochronos is a 2.5D environmental conservation adventure game built for WebGL and PC. Players restore ecosystems, fight corruption, learn through an integrated knowledge hub, and take real-world actions guided through the platform.
+
+---
+
+## 🎮 Game Vision
+
+A long‑lasting, mission‑driven experience that blends gameplay with ecological awareness. Ecochronos aims to:
+
+- Inspire players to understand environmental systems
+- Encourage real‑world conservation
+- Deliver engaging missions that evolve over time
+- Provide a learning hub to build practical, actionable knowledge
+
+---
+
+## 🧱 MVP Scope
+
+### 🎬 Cinematic Intro
+
+- 3D animated intro showing earth's decline and emergence of Eco‑Gods.
+
+### 👤 Account System
+
+- Google login
+- Email/password login
+- Sync progress across devices
+
+### 🎮 Core Gameplay (2.5D)
+
+- Player spawning in base sanctuary
+- Corruption zones (up to 6 dark zones for MVP)
+- 1–3 missions introducing:
+    - Pollution removal
+    - Wildlife rescue
+    - Tree/reef restoration
+
+### 🌱 Learning Hub
+
+- Neutral zone the player can visit anytime
+- Sections: forests, oceans, climate, urban waste, biodiversity
+- Every section provides:
+    - Short lessons
+    - Video or animated explanations
+    - Real‑world actions players can perform
+    - Rewards for learning
+
+### 🏗️ Backend
+
+- Player profiles
+- Progress tracking
+- Mission states
+- Inventory
+- Skill trees
+- Learning hub analytics
+- Leaderboards (optional for MVP)
+
+---
+
+## 🔧 Tech Stack
+
+### Frontend (Unity – WebGL & PC)
+
+- Scene management
+- 2.5D rendering
+- Player controller
+- UI/UX
+- Cutscene handling
+
+### Backend
+
+**Supabase (recommended)**:
+
+- Authentication
+- Postgres database
+- Edge functions
+- Realtime presence
+- File storage (assets, user data)
+- Analytics
+
+**(Alternative: Firebase – original plan)**
+
+---
+
+## 🧩 Game Architecture
+
+### 1. **Client Layer (Unity)**
+
+- Player movement & combat
+- Scene transitions
+- UI (inventory, missions, learning hub)
+- Local caching
+
+### 2. **API Layer (Supabase Edge Functions)**
+
+- Secure logic for:
+    - XP calculation
+    - Inventory updates
+    - Leaderboards
+    - Analytics
+
+### 3. **Database Layer**
+
+Tables:
+
+- `players`
+- `missions`
+- `mission_progress`
+- `inventory`
+- `learning_progress`
+- `actions_performed`
+
+### 4. **Content System**
+
+- JSON‑based mission definitions
+- Dynamic environment tile loading
+
+---
+
+## 📚 Learning Hub (Education Zone)
+
+### Purpose
+
+To translate game concepts into **real environmental knowledge**.
+
+### How It Creates Impact
+
+- Helps players understand *why* restoration matters
+- Encourages real‑life actions via "Action Quests"
+- Builds environmental literacy
+- Creates a feedback loop (learn → apply in game → act outside game)
+
+### Integration in Gameplay
+
+- Completing lessons grants XP or abilities
+- Some missions require knowledge from the hub
+- Real‑world actions unlock unique items or cosmetics
+
+---
+
+## 🚀 Post‑MVP Expansion
+
+### 1. Multiplayer Integration
+
+- Co‑op missions And Community leaderboards
+- Public world restoration zones
+- Shared leaderboards
+
+### 2. Blockchain Integration (Optional)
+
+- Eco‑credits for real‑world actions
+- Player‑owned cosmetics
+- Immutable mission logs
+
+### 3. More Zones & Storylines
+
+- Desertification zone
+- Glacier collapse
+- Coral reef revival
+
+### 4. Community‑Driven Events
+
+- Weekend challenges
+- Global restoration campaigns
+
+---
+
+## 📂 Folder Structure (Recommended for Team)
+
+/ecochronos
+
+/frontend-unity
+
+/backend-supabase
+
+/documentation
+
+/art-assets
+
+/learning-content
+
+/missions
